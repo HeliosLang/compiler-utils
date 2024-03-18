@@ -24,7 +24,7 @@ export class Comment {
     }
 
     /**
-     * @param {any} token 
+     * @param {any} token
      * @returns {Option<Comment>}
      */
     static from(token) {
