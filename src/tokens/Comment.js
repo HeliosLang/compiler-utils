@@ -1,3 +1,10 @@
+import { None } from "@helios-lang/codec-utils"
+
+/**
+ * @template T
+ * @typedef {import("@helios-lang/codec-utils").Option<T>} Option
+ */
+
 /**
  * @typedef {import("../errors/index.js").Site} Site
  */
@@ -14,6 +21,14 @@ export class Comment {
     constructor(value, site) {
         this.value = value
         this.site = site
+    }
+
+    /**
+     * @param {any} token 
+     * @returns {Option<Comment>}
+     */
+    static from(token) {
+        return token instanceof Comment ? token : None
     }
 
     toString() {

@@ -1,5 +1,6 @@
 import { None } from "@helios-lang/codec-utils"
 import {
+    Comment,
     Group,
     Source,
     StringLiteral,
@@ -58,9 +59,11 @@ export function translateImportPaths(raw, translator) {
             w.writeToken(t)
         }
 
-        prev0 = prev1
-        prev1 = prev2
-        prev2 = t
+        if (!Comment.from(t)) {
+            prev0 = prev1
+            prev1 = prev2
+            prev2 = t
+        }
     }
 
     return w.finalize()
