@@ -6,7 +6,7 @@
     "type": "module",
     "scripts": {
         "build": "npm test",
-        "clean": "find src/ -name *.d.ts* | xargs rm",
+        "clean": "find src/ -name *.d.ts* | xargs rm -f",
         "postpublish": "npm run clean",
         "prebuild": "npm run clean && npx tsc -p jsconfig.json --noEmit false --emitDeclarationOnly",
         "prepare": "npm run build",

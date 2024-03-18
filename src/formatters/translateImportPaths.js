@@ -26,7 +26,7 @@ import { SourceWriter } from "../tokens/SourceWriter.js"
  */
 export function translateImportPaths(raw, translator) {
     const tokens = new Tokenizer(new Source("", raw), {
-        preserveComments: false
+        preserveComments: true
     }).tokenize()
     const w = new SourceWriter()
 
