@@ -5,8 +5,11 @@
     "main": "src/index.js",
     "type": "module",
     "scripts": {
-        "build": "npx tsc",
+        "build": "npm test",
         "clean": "find src/ -name *.d.ts* | xargs rm",
+        "postpublish": "npm run clean",
+        "prebuild": "npm run clean && npx tsc -p jsconfig.json --noEmit false --emitDeclarationOnly",
+        "prepare": "npm run build",
         "prettify": "npx prettier . --write",
         "test": "npm run test:pretty && npm run test:types && npm run test:suite",
         "test:pretty": "npx prettier . --check",
