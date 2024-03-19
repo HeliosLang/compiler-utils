@@ -8,6 +8,8 @@ import { TokenSite } from "./TokenSite.js"
  * @typedef {import("./Token.js").Token} Token
  */
 
+export const REAL_PRECISION = 6
+
 /**
  * Fixed point number literal token
  * @implements {Token}

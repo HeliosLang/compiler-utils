@@ -4,7 +4,7 @@ import { BoolLiteral } from "./BoolLiteral.js"
 import { ByteArrayLiteral } from "./ByteArrayLiteral.js"
 import { Group } from "./Group.js"
 import { IntLiteral } from "./IntLiteral.js"
-import { RealLiteral } from "./RealLiteral.js"
+import { REAL_PRECISION, RealLiteral } from "./RealLiteral.js"
 import { Source } from "./Source.js"
 import { SourceIndex } from "./SourceIndex.js"
 import { StringLiteral } from "./StringLiteral.js"
@@ -94,7 +94,7 @@ export class Tokenizer {
                 (options?.extraValidFirstLetters ?? "")
             ).split("")
         )
-        this.realPrecision = options?.realPrecision ?? 6
+        this.realPrecision = options?.realPrecision ?? REAL_PRECISION
         this.preserveComments = options?.preserveComments ?? false
 
         this.sourceIndex = new SourceIndex(source, options.sourceMap)
