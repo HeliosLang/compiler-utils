@@ -1,19 +1,13 @@
-import { None } from "@helios-lang/codec-utils"
+import { None } from "@helios-lang/type-utils"
 import {
     Comment,
     Group,
     Source,
     StringLiteral,
-    TokenReader,
     Tokenizer,
     Word
 } from "../tokens/index.js"
 import { SourceWriter } from "../tokens/SourceWriter.js"
-
-/**
- * @template T
- * @typedef {import("@helios-lang/codec-utils").Option<T>} Option
- */
 
 /**
  * @typedef {import("../tokens/index.js").Token} Token

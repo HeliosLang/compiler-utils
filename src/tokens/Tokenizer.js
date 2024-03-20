@@ -1,4 +1,5 @@
-import { encodeUtf8, hexToBytes, isSome } from "@helios-lang/codec-utils"
+import { encodeUtf8, hexToBytes } from "@helios-lang/codec-utils"
+import { isSome } from "@helios-lang/type-utils"
 import { ErrorCollector } from "../errors/index.js"
 import { BoolLiteral } from "./BoolLiteral.js"
 import { ByteArrayLiteral } from "./ByteArrayLiteral.js"
@@ -12,11 +13,6 @@ import { SymbolToken } from "./SymbolToken.js"
 import { TokenSite } from "./TokenSite.js"
 import { Word } from "./Word.js"
 import { Comment } from "./Comment.js"
-
-/**
- * @template T
- * @typedef {import("@helios-lang/codec-utils").Option<T>} Option
- */
 
 /**
  * @typedef {import("../errors/index.js").Site} Site

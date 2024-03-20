@@ -1,4 +1,4 @@
-import { TokenSite } from "./TokenSite.js"
+export {}
 
 /**
  * @typedef {import("../errors/index.js").Site} Site

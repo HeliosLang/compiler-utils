@@ -2,15 +2,7 @@ import { Source } from "./Source.js"
 import { TokenSite } from "./TokenSite.js"
 
 /**
- * @template T
- * @typedef {import("@helios-lang/codec-utils").Option<T>} Option
- */
-
-/**
  * @typedef {import("../errors/Site.js").Site} Site
- */
-
-/**
  * @typedef {import("./SourceMap.js").SourceMap} SourceMap
  */
 

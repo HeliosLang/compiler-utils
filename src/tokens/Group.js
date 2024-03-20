@@ -3,15 +3,7 @@ import { SymbolToken } from "./SymbolToken.js"
 import { TokenSite } from "./TokenSite.js"
 
 /**
- * @template T
- * @typedef {import("@helios-lang/codec-utils").Option<T>} Option
- */
-
-/**
  * @typedef {import("../errors/index.js").Site} Site
- */
-
-/**
  * @typedef {import("./Token.js").Token} Token
  */
 

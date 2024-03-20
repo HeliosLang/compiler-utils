@@ -1,15 +1,7 @@
-import { None } from "@helios-lang/codec-utils"
-
-/**
- * @template T
- * @typedef {import("@helios-lang/codec-utils").Option<T>} Option
- */
+import { None } from "@helios-lang/type-utils"
 
 /**
  * @typedef {import("../errors/index.js").Site} Site
- */
-
-/**
  * @typedef {import("./Token.js").Token} Token
  */
 

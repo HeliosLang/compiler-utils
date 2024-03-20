@@ -2,9 +2,6 @@ import { TokenSite } from "./TokenSite.js"
 
 /**
  * @typedef {import("../errors/index.js").Site} Site
- */
-
-/**
  * @typedef {import("./Token.js").Token} Token
  */
 

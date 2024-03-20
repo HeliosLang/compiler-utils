@@ -1,12 +1,7 @@
-import { None } from "@helios-lang/codec-utils"
+import { None } from "@helios-lang/type-utils"
 import { ErrorCollector } from "../errors/ErrorCollector.js"
 import { Word } from "./Word.js"
 import { TokenSite } from "./TokenSite.js"
-
-/**
- * @template T
- * @typedef {import("@helios-lang/codec-utils").Option<T>} Option
- */
 
 /**
  * @typedef {import("./Token.js").Token} Token
