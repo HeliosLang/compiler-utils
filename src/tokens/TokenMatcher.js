@@ -67,13 +67,18 @@ export const wildcard = {
 
 /**
  * @param {string} s
+ * @param {boolean} caseInsensitive
  * @returns {TokenMatcher<Word>}
  */
-export function word(s) {
-    const w = new Word(s)
-
+export function word(s, caseInsensitive = false) {
     return {
-        matches: (t) => (w.isEqual(t) ? w : None),
+        matches: (t) =>
+            t instanceof Word &&
+            (caseInsensitive
+                ? t.value.toLowerCase() == s.toLowerCase()
+                : t.value == s)
+                ? t
+                : None,
         toString: () => s
     }
 }
