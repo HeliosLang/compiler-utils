@@ -32,6 +32,14 @@ export class IntLiteral {
     }
 
     /**
+     * @param {Token} other
+     * @returns {boolean}
+     */
+    isEqual(other) {
+        return other instanceof IntLiteral && other.value == this.value
+    }
+
+    /**
      * @returns {string}
      */
     toString() {

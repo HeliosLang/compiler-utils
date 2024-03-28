@@ -35,6 +35,17 @@ export class StringLiteral {
         return token instanceof StringLiteral ? token : None
     }
 
+    /**
+     * @param {Token} other
+     * @returns {boolean}
+     */
+    isEqual(other) {
+        return other instanceof StringLiteral && other.value == this.value
+    }
+
+    /**
+     * @returns {string}
+     */
     toString() {
         return `"${this.value.toString()}"`
     }

@@ -68,6 +68,22 @@ export class Group {
     }
 
     /**
+     * @param {Token} other
+     * @returns {boolean}
+     */
+    isEqual(other) {
+        return (
+            other instanceof Group &&
+            this.fields.length == other.fields.length &&
+            this.fields.every(
+                (f, i) =>
+                    f.length == other.fields[i].length &&
+                    f.every((ff, j) => ff.isEqual(other.fields[i][j]))
+            )
+        )
+    }
+
+    /**
      * @param {string} kind
      * @returns {boolean}
      */

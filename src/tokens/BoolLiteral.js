@@ -41,6 +41,14 @@ export class BoolLiteral {
     }
 
     /**
+     * @param {Token} other
+     * @returns {boolean}
+     */
+    isEqual(other) {
+        return other instanceof BoolLiteral && other.value == this.value
+    }
+
+    /**
      * @returns {string}
      */
     toString() {

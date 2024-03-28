@@ -34,42 +34,6 @@ export class SymbolToken {
     }
 
     /**
-     * @param {any} token
-     * @param {Option<string | string[]>} value
-     * @returns {token is SymbolToken}
-     */
-    static isSymbol(token, value = null) {
-        if (token instanceof SymbolToken) {
-            if (value) {
-                return token.matches(value)
-            } else {
-                return true
-            }
-        } else {
-            return false
-        }
-    }
-
-    /**
-     * @param {string | string[]} value
-     * @returns {boolean}
-     */
-    matches(value) {
-        if (value instanceof Array) {
-            return value.lastIndexOf(this.value) != -1
-        } else {
-            return value == this.value
-        }
-    }
-
-    /**
-     * @returns {string}
-     */
-    toString() {
-        return this.value
-    }
-
-    /**
      * Finds the index of the first Symbol(value) in a list of tokens.
      * Returns -1 if none found.
      * @param {Token[]} ts
@@ -97,5 +61,49 @@ export class SymbolToken {
         }
 
         return -1
+    }
+
+    /**
+     * @param {any} token
+     * @param {Option<string | string[]>} value
+     * @returns {token is SymbolToken}
+     */
+    static isSymbol(token, value = null) {
+        if (token instanceof SymbolToken) {
+            if (value) {
+                return token.matches(value)
+            } else {
+                return true
+            }
+        } else {
+            return false
+        }
+    }
+
+    /**
+     * @param {Token} other
+     * @returns {boolean}
+     */
+    isEqual(other) {
+        return other instanceof SymbolToken && other.value == this.value
+    }
+
+    /**
+     * @param {string | string[]} value
+     * @returns {boolean}
+     */
+    matches(value) {
+        if (value instanceof Array) {
+            return value.lastIndexOf(this.value) != -1
+        } else {
+            return value == this.value
+        }
+    }
+
+    /**
+     * @returns {string}
+     */
+    toString() {
+        return this.value
     }
 }

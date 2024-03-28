@@ -1,4 +1,4 @@
-import { bytesToHex } from "@helios-lang/codec-utils"
+import { bytesToHex, equalsBytes } from "@helios-lang/codec-utils"
 import { TokenSite } from "./TokenSite.js"
 
 /**
@@ -15,7 +15,7 @@ export class ByteArrayLiteral {
      * @readonly
      * @type {number[]}
      */
-    bytes
+    value
 
     /**
      * @readonly
@@ -24,15 +24,29 @@ export class ByteArrayLiteral {
     site
 
     /**
-     * @param {number[]} bytes
+     * @param {number[]} value
      * @param {Site} site
      */
-    constructor(bytes, site = TokenSite.dummy()) {
-        this.bytes = bytes
+    constructor(value, site = TokenSite.dummy()) {
+        this.value = value
         this.site = site
     }
 
+    /**
+     * @param {Token} other
+     * @returns {boolean}
+     */
+    isEqual(other) {
+        return (
+            other instanceof ByteArrayLiteral &&
+            equalsBytes(this.value, other.value)
+        )
+    }
+
+    /**
+     * @returns {string}
+     */
     toString() {
-        return `#${bytesToHex(this.bytes)}`
+        return `#${bytesToHex(this.value)}`
     }
 }

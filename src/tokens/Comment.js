@@ -5,6 +5,9 @@ import { None } from "@helios-lang/type-utils"
  * @typedef {import("./Token.js").Token} Token
  */
 
+/**
+ * @implements {Token}
+ */
 export class Comment {
     /**
      * @param {string} value - includes the comment symbols
@@ -23,6 +26,17 @@ export class Comment {
         return token instanceof Comment ? token : None
     }
 
+    /**
+     * @param {Token} other
+     * @returns {boolean}
+     */
+    isEqual(other) {
+        return other instanceof Comment && other.value == this.value
+    }
+
+    /**
+     * @returns {string}
+     */
     toString() {
         return this.value
     }

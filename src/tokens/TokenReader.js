@@ -3,6 +3,8 @@ import { ErrorCollector } from "../errors/ErrorCollector.js"
 import { Word } from "./Word.js"
 import { TokenSite } from "./TokenSite.js"
 import { Group } from "./Group.js"
+import { IntLiteral } from "./IntLiteral.js"
+import { SymbolToken } from "./SymbolToken.js"
 
 /**
  * @typedef {import("./Token.js").Token} Token
@@ -42,6 +44,47 @@ export class TokenReader {
         if (this.i < this.tokens.length) {
             this.errors.syntax(this.tokens[this.i].site, "unexpected tokens")
         }
+    }
+
+    /**
+     * @param {bigint | number} i
+     * @returns {TokenReader}
+     */
+    expectInt(i) {
+        return this.expectToken(new IntLiteral(BigInt(i)))
+    }
+
+    /**
+     * @param {string} value
+     * @returns {TokenReader}
+     */
+    expectSymbol(value) {
+        return this.expectToken(new SymbolToken(value))
+    }
+
+    /**
+     * @param {Token} token
+     * @returns {TokenReader}
+     */
+    expectToken(token) {
+        const t = this.readToken()
+
+        if (t && !t.isEqual(token)) {
+            this.errors.syntax(
+                t.site,
+                `expected ${token.toString()}, got ${t.toString()}`
+            )
+        }
+
+        return this
+    }
+
+    /**
+     * @param {string} value
+     * @returns {TokenReader}
+     */
+    expectWord(value) {
+        return this.expectToken(new Word(value))
     }
 
     /**

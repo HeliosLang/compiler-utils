@@ -34,6 +34,14 @@ export class RealLiteral {
     }
 
     /**
+     * @param {Token} other
+     * @returns {boolean}
+     */
+    isEqual(other) {
+        return other instanceof RealLiteral && other.value == this.value
+    }
+
+    /**
      * @returns {string}
      */
     toString() {

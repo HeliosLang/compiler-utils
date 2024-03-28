@@ -1,3 +1,4 @@
+import { None } from "@helios-lang/type-utils"
 import { TokenSite } from "./TokenSite.js"
 
 /**
@@ -30,7 +31,26 @@ export class Word {
      * @returns {Option<Word>}
      */
     static from(token) {
-        return token instanceof Word ? token : null
+        return token instanceof Word ? token : None
+    }
+
+    /**
+     * @param {Token} other
+     * @returns {boolean}
+     */
+    isEqual(other) {
+        return other instanceof Word && other.value == this.value
+    }
+
+    /**
+     * @returns {boolean}
+     */
+    isInternal() {
+        return (
+            this.value == "_" ||
+            this.value.startsWith("__") ||
+            this.value.endsWith("__")
+        )
     }
 
     /**
@@ -43,17 +63,6 @@ export class Word {
         } else {
             return value == this.value
         }
-    }
-
-    /**
-     * @returns {boolean}
-     */
-    isInternal() {
-        return (
-            this.value == "_" ||
-            this.value.startsWith("__") ||
-            this.value.endsWith("__")
-        )
     }
 
     /**
