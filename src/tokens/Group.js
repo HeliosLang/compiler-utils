@@ -1,3 +1,4 @@
+import { None } from "@helios-lang/type-utils"
 import { SourceWriter } from "./SourceWriter.js"
 import { SymbolToken } from "./SymbolToken.js"
 import { TokenSite } from "./TokenSite.js"
@@ -63,7 +64,7 @@ export class Group {
      * @returns {Option<Group>}
      */
     static from(token) {
-        return token instanceof Group ? token : null
+        return token instanceof Group ? token : None
     }
 
     /**
