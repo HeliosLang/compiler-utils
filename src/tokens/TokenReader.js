@@ -38,10 +38,16 @@ export class TokenReader {
         this.i = 0
     }
 
+    assertEof() {
+        if (this.i < this.tokens.length) {
+            this.errors.syntax(this.tokens[this.i].site, "unexpected tokens")
+        }
+    }
+
     /**
      * @returns {boolean}
      */
-    isAtEnd() {
+    isEof() {
         return this.i >= this.tokens.length
     }
 
