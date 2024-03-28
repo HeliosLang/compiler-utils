@@ -1,13 +1,18 @@
 import { None, isSome } from "@helios-lang/type-utils"
 import { ErrorCollector } from "../errors/ErrorCollector.js"
-import { Word } from "./Word.js"
-import { TokenSite } from "./TokenSite.js"
 import { Group } from "./Group.js"
 import { IntLiteral } from "./IntLiteral.js"
 import { SymbolToken } from "./SymbolToken.js"
+import { TokenSite } from "./TokenSite.js"
+import { Word } from "./Word.js"
 
 /**
  * @typedef {import("./Token.js").Token} Token
+ */
+
+/**
+ * @template {Token} [T=Token]
+ * @typedef {import("./TokenMatcher.js").TokenMatcher<T>} TokenMatcher
  */
 
 export class TokenReader {
@@ -31,6 +36,11 @@ export class TokenReader {
     i
 
     /**
+     * @type {TokenMatcher<Token>[][]}
+     */
+    failedMatches
+
+    /**
      * @param {Token[]} tokens
      * @param {ErrorCollector} errors
      */
@@ -38,6 +48,7 @@ export class TokenReader {
         this.tokens = tokens
         this.errors = errors
         this.i = 0
+        this.failedMatches = []
     }
 
     assertEof() {
@@ -92,6 +103,58 @@ export class TokenReader {
      */
     isEof() {
         return this.i >= this.tokens.length
+    }
+
+    /**
+     * @template {TokenMatcher[]} Matchers
+     * @param  {[...Matchers]} matchers
+     * @returns {Option<{[M in keyof Matchers]: Matchers[M] extends TokenMatcher<infer T> ? T : never}>}
+     */
+    matches(...matchers) {
+        if (this.tokens.length - this.i < matchers.length) {
+            return None
+        } else {
+            const res = matchers.every((m, j) =>
+                m.matches(this.tokens[this.i + j])
+            )
+
+            if (res) {
+                const matched = /** @type {any} */ (
+                    this.tokens.slice(this.i, this.i + matchers.length)
+                )
+                this.failedMatches = []
+                this.i += matchers.length
+                return matched
+            } else {
+                return None
+            }
+        }
+    }
+
+    /**
+     * @returns {TokenReader}
+     */
+    endMatch() {
+        const n = this.failedMatches.length
+
+        if (n > 0) {
+            const longest = this.failedMatches.reduce(
+                (prev, fm) => Math.max(prev, fm.length),
+                0
+            )
+
+            this.errors.syntax(
+                this.tokens[this.i].site,
+                `expected ${this.failedMatches.map((fm, i) => fm.map((f) => f.toString()).join(" ") + (i < n - 2 ? ", " : i < n - 1 ? " or " : "")).join("")}, got ${this.tokens
+                    .slice(this.i, longest)
+                    .map((t) => t.toString())
+                    .join(" ")}`
+            )
+
+            this.failedMatches = []
+        }
+
+        return this
     }
 
     /**
