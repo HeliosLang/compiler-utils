@@ -16,13 +16,7 @@ import { Comment } from "./Comment.js"
 
 /**
  * @typedef {import("../errors/index.js").Site} Site
- */
-
-/**
  * @typedef {import("./SourceMap.js").SourceMap} SourceMap
- */
-
-/**
  * @typedef {import("./Token.js").Token} Token
  */
 
@@ -31,6 +25,7 @@ import { Comment } from "./Comment.js"
  *   sourceMap?: SourceMap
  *   extraValidFirstLetters?: string
  *   realPrecision?: number
+ *   tokenizeReal?: boolean
  *   preserveComments?: boolean
  * }} TokenizerOptions
  */
@@ -51,6 +46,12 @@ export class Tokenizer {
      * @type {number}
      */
     realPrecision
+
+    /**
+     * @readonly
+     * @type {boolean}
+     */
+    tokenizeReal
 
     /**
      * @readonly
@@ -91,6 +92,7 @@ export class Tokenizer {
             ).split("")
         )
         this.realPrecision = options?.realPrecision ?? REAL_PRECISION
+        this.tokenizeReal = options?.tokenizeReal ?? true
         this.preserveComments = options?.preserveComments ?? false
 
         this.sourceIndex = new SourceIndex(source, options.sourceMap)
@@ -382,7 +384,7 @@ export class Tokenizer {
             this.addSyntaxError(site, `bad literal integer type 0${c}`)
         } else if (c >= "0" && c <= "9") {
             this.addSyntaxError(site, "unexpected leading 0")
-        } else if (c == ".") {
+        } else if (c == "." && this.tokenizeReal) {
             this.readFixedPoint(site, ["0"])
         } else {
             this.pushToken(new IntLiteral(0n, site))
@@ -476,7 +478,7 @@ export class Tokenizer {
                         this.rangeSite(site),
                         "invalid syntax for decimal integer literal"
                     )
-                } else if (c == ".") {
+                } else if (c == "." && this.tokenizeReal) {
                     const cf = this.peekChar()
 
                     if (cf >= "0" && cf <= "9") {
