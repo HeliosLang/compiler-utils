@@ -27,6 +27,7 @@ import { Comment } from "./Comment.js"
  *   realPrecision?: number
  *   tokenizeReal?: boolean
  *   preserveComments?: boolean
+ *   allowLeadingZeroes?: boolean
  * }} TokenizerOptions
  */
 
@@ -58,6 +59,12 @@ export class Tokenizer {
      * @type {boolean}
      */
     preserveComments
+
+    /**
+     * @readonly
+     * @type {boolean}
+     */
+    allowLeadingZeroes
 
     /**
      * Current character index
@@ -94,6 +101,7 @@ export class Tokenizer {
         this.realPrecision = options?.realPrecision ?? REAL_PRECISION
         this.tokenizeReal = options?.tokenizeReal ?? true
         this.preserveComments = options?.preserveComments ?? false
+        this.allowLeadingZeroes = options?.allowLeadingZeroes ?? false
 
         this.sourceIndex = new SourceIndex(source, options.sourceMap)
         this.tokens = [] // reset to empty to list at start of tokenize()
@@ -383,7 +391,11 @@ export class Tokenizer {
         } else if ((c >= "A" && c <= "Z") || (c >= "a" && c <= "z")) {
             this.addSyntaxError(site, `bad literal integer type 0${c}`)
         } else if (c >= "0" && c <= "9") {
-            this.addSyntaxError(site, "unexpected leading 0")
+            if (this.allowLeadingZeroes) {
+                this.readDecimal(site, c)
+            } else {
+                this.addSyntaxError(site, "unexpected leading 0")
+            }
         } else if (c == "." && this.tokenizeReal) {
             this.readFixedPoint(site, ["0"])
         } else {
