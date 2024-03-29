@@ -127,7 +127,9 @@ export class TokenReader {
                         t instanceof Group
                             ? new Group(
                                   t.kind,
-                                  t.fields.map((f) => new TokenReader(f)),
+                                  t.fields.map(
+                                      (f) => new TokenReader(f, this.errors)
+                                  ),
                                   t.separators,
                                   t.site
                               )
