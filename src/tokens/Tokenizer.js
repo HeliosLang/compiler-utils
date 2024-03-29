@@ -618,7 +618,11 @@ export class Tokenizer {
         let chars = []
 
         // case doesn't matter
-        while ((c >= "a" && c <= "f") || (c >= "0" && c <= "9")) {
+        while (
+            (c >= "a" && c <= "f") ||
+            (c >= "A" && c <= "F") ||
+            (c >= "0" && c <= "9")
+        ) {
             chars.push(c)
             c = this.readChar()
         }
