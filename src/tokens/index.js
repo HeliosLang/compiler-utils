@@ -8,6 +8,8 @@ export {
     anySymbol,
     anyWord,
     group,
+    intlit,
+    strlit,
     symbol,
     wildcard,
     word

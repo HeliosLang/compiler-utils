@@ -2,6 +2,8 @@ import { None } from "@helios-lang/type-utils"
 import { SymbolToken } from "./SymbolToken.js"
 import { Word } from "./Word.js"
 import { Group } from "./Group.js"
+import { IntLiteral } from "./IntLiteral.js"
+import { StringLiteral } from "./StringLiteral.js"
 
 /**
  * @typedef {import("./Token.js").Token} Token
@@ -41,6 +43,30 @@ export function group(kind) {
     return {
         matches: (t) => (t instanceof Group && t.isKind(kind) ? t : None),
         toString: () => `${kind}...${Group.otherSymbol(kind)}`
+    }
+}
+
+/**
+ * @param {string | number | bigint} value
+ * @returns {TokenMatcher<IntLiteral>}
+ */
+export function intlit(value) {
+    return {
+        matches: (t) =>
+            t instanceof IntLiteral && t.value == BigInt(value) ? t : None,
+        toString: () => `${value.toString()}`
+    }
+}
+
+/**
+ * @param {string} value
+ * @returns {TokenMatcher<StringLiteral>}
+ */
+export function strlit(value) {
+    return {
+        matches: (t) =>
+            t instanceof StringLiteral && t.value == value ? t : None,
+        toString: () => `"${value.toString()}"`
     }
 }
 
