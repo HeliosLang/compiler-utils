@@ -4,6 +4,8 @@ import { Word } from "./Word.js"
 import { Group } from "./Group.js"
 import { IntLiteral } from "./IntLiteral.js"
 import { StringLiteral } from "./StringLiteral.js"
+import { ByteArrayLiteral } from "./ByteArrayLiteral.js"
+import { bytesToHex, equalsBytes } from "@helios-lang/codec-utils"
 
 /**
  * @typedef {import("./Token.js").Token} Token
@@ -36,6 +38,22 @@ export const anyWord = {
 }
 
 /**
+ * @param {Option<number[] | Uint8Array>} value
+ * @returns {TokenMatcher<ByteArrayLiteral>}
+ */
+export function byteslit(value = None) {
+    return {
+        matches: (t) =>
+            t instanceof ByteArrayLiteral &&
+            (value ? equalsBytes(t.value, value) : true)
+                ? t
+                : None,
+        toString: () =>
+            value ? `#${bytesToHex(Array.from(value))}` : "<bytes>"
+    }
+}
+
+/**
  * @param {string} kind
  * @returns {TokenMatcher<Group>}
  */
@@ -47,26 +65,30 @@ export function group(kind) {
 }
 
 /**
- * @param {string | number | bigint} value
+ * @param {Option<string | number | bigint>} value
  * @returns {TokenMatcher<IntLiteral>}
  */
-export function intlit(value) {
+export function intlit(value = None) {
     return {
         matches: (t) =>
-            t instanceof IntLiteral && t.value == BigInt(value) ? t : None,
-        toString: () => `${value.toString()}`
+            t instanceof IntLiteral && (value ? t.value == BigInt(value) : true)
+                ? t
+                : None,
+        toString: () => (value ? `${value.toString()}` : "<int>")
     }
 }
 
 /**
- * @param {string} value
+ * @param {Option<string>} value
  * @returns {TokenMatcher<StringLiteral>}
  */
-export function strlit(value) {
+export function strlit(value = None) {
     return {
         matches: (t) =>
-            t instanceof StringLiteral && t.value == value ? t : None,
-        toString: () => `"${value.toString()}"`
+            t instanceof StringLiteral && (value ? t.value == value : true)
+                ? t
+                : None,
+        toString: () => (value ? `"${value.toString()}"` : "<string>")
     }
 }
 
