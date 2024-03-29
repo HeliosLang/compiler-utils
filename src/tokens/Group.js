@@ -10,6 +10,7 @@ import { TokenSite } from "./TokenSite.js"
 
 /**
  * Group token can '(...)', '[...]' or '{...}' and can contain comma separated fields.
+ * @template {Token[] | {tokens: Token[]}} [F=Token[]] - each field be either a list of tokens or a TokenReader
  * @implements {Token}
  */
 export class Group {
@@ -22,7 +23,7 @@ export class Group {
 
     /**
      * @readonly
-     * @type {Token[][]}
+     * @type {F[]}
      */
     fields
 
@@ -42,7 +43,7 @@ export class Group {
     /**
 	 
 	 * @param {string} kind - "(", "[" or "{"
-	 * @param {Token[][]} fields 
+	 * @param {F[]} fields 
      * @param {SymbolToken[]} separators - useful for more accurate errors
      * @param {TokenSite} site 
 	 */
@@ -65,22 +66,6 @@ export class Group {
      */
     static from(token) {
         return token instanceof Group ? token : None
-    }
-
-    /**
-     * @param {Token} other
-     * @returns {boolean}
-     */
-    isEqual(other) {
-        return (
-            other instanceof Group &&
-            this.fields.length == other.fields.length &&
-            this.fields.every(
-                (f, i) =>
-                    f.length == other.fields[i].length &&
-                    f.every((ff, j) => ff.isEqual(other.fields[i][j]))
-            )
-        )
     }
 
     /**
@@ -122,7 +107,11 @@ export class Group {
             for (let i = 0; i < this.fields.length; i++) {
                 const f = this.fields[i]
 
-                this.fields[i].forEach((f) => w.writeToken(f))
+                if (Array.isArray(f)) {
+                    f.forEach((f) => w.writeToken(f))
+                } else {
+                    f.tokens.forEach((f) => w.writeToken(f))
+                }
 
                 if (i < this.fields.length - 1) {
                     w.writeToken(this.separators[i])
@@ -146,7 +135,11 @@ export class Group {
             const parts = []
 
             for (let f of this.fields) {
-                parts.push(f.map((t) => t.toString(false)).join(" "))
+                if (Array.isArray(f)) {
+                    parts.push(f.map((t) => t.toString(false)).join(" "))
+                } else {
+                    parts.push(f.tokens.map((t) => t.toString(false)).join(" "))
+                }
             }
 
             s += parts.join(", ") + Group.otherSymbol(this.kind)

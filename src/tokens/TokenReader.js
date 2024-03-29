@@ -17,7 +17,6 @@ import { Word } from "./Word.js"
 
 export class TokenReader {
     /**
-     * @private
      * @readonly
      * @type {Token[]}
      */
@@ -51,51 +50,50 @@ export class TokenReader {
         this.failedMatches = []
     }
 
-    assertEof() {
-        if (this.i < this.tokens.length) {
-            this.errors.syntax(this.tokens[this.i].site, "unexpected tokens")
-        }
-    }
-
     /**
-     * @param {bigint | number} i
+     * @template {TokenMatcher[]} Matchers
+     * @param  {[...Matchers]} matchers
      * @returns {TokenReader}
      */
-    expectInt(i) {
-        return this.expectToken(new IntLiteral(BigInt(i)))
-    }
+    assert(...matchers) {
+        matchers.forEach((m, j) => {
+            const i = this.i + j
 
-    /**
-     * @param {string} value
-     * @returns {TokenReader}
-     */
-    expectSymbol(value) {
-        return this.expectToken(new SymbolToken(value))
-    }
+            if (i == this.tokens.length) {
+                let lastSite = this.tokens[this.tokens.length - 1].site
 
-    /**
-     * @param {Token} token
-     * @returns {TokenReader}
-     */
-    expectToken(token) {
-        const t = this.readToken()
+                if (
+                    lastSite instanceof TokenSite &&
+                    lastSite.endLine &&
+                    lastSite.endColumn
+                ) {
+                    lastSite = new TokenSite(
+                        lastSite.file,
+                        lastSite.endLine,
+                        lastSite.endColumn
+                    )
+                }
 
-        if (t && !t.isEqual(token)) {
-            this.errors.syntax(
-                t.site,
-                `expected ${token.toString()}, got ${t.toString()}`
-            )
-        }
+                this.errors.syntax(lastSite, "expected more tokens")
+            } else if (i < this.tokens.length) {
+                if (!m.matches(this.tokens[i])) {
+                    this.errors.syntax(
+                        this.tokens[i].site,
+                        `expected ${m.toString()}, got ${this.tokens[i].toString()}`
+                    )
+                }
+            }
+        })
+
+        this.i = this.i + matchers.length
 
         return this
     }
 
-    /**
-     * @param {string} value
-     * @returns {TokenReader}
-     */
-    expectWord(value) {
-        return this.expectToken(new Word(value))
+    end() {
+        if (this.i < this.tokens.length) {
+            this.errors.syntax(this.tokens[this.i].site, "unexpected tokens")
+        }
     }
 
     /**
@@ -106,29 +104,49 @@ export class TokenReader {
     }
 
     /**
+     * @template {Token} T
+     * @typedef {T extends Group ? Group<TokenReader> : T} AugmentGroup
+     */
+
+    /**
      * @template {TokenMatcher[]} Matchers
      * @param  {[...Matchers]} matchers
-     * @returns {Option<{[M in keyof Matchers]: Matchers[M] extends TokenMatcher<infer T> ? T : never}>}
+     * @returns {Option<Matchers extends [TokenMatcher<infer T>] ? AugmentGroup<T> : {[M in keyof Matchers]: Matchers[M] extends TokenMatcher<infer T> ? AugmentGroup<T> : never}>}
      */
     matches(...matchers) {
-        if (this.tokens.length - this.i < matchers.length) {
-            return None
-        } else {
+        const n = matchers.length
+
+        if (this.tokens.length - this.i >= n) {
             const res = matchers.every((m, j) =>
                 m.matches(this.tokens[this.i + j])
             )
 
             if (res) {
                 const matched = /** @type {any} */ (
-                    this.tokens.slice(this.i, this.i + matchers.length)
+                    this.tokens.slice(this.i, this.i + n).map((t) =>
+                        t instanceof Group
+                            ? new Group(
+                                  t.kind,
+                                  t.fields.map((f) => new TokenReader(f)),
+                                  t.separators,
+                                  t.site
+                              )
+                            : t
+                    )
                 )
                 this.failedMatches = []
-                this.i += matchers.length
-                return matched
-            } else {
-                return None
+                this.i += n
+
+                if (matched.length == 1) {
+                    return matched[0]
+                } else {
+                    return matched
+                }
             }
         }
+
+        this.failedMatches.push(matchers)
+        return None
     }
 
     /**
@@ -145,10 +163,10 @@ export class TokenReader {
 
             this.errors.syntax(
                 this.tokens[this.i].site,
-                `expected ${this.failedMatches.map((fm, i) => fm.map((f) => f.toString()).join(" ") + (i < n - 2 ? ", " : i < n - 1 ? " or " : "")).join("")}, got ${this.tokens
+                `expected '${this.failedMatches.map((fm, i) => fm.map((f) => f.toString()).join(" ") + (i < n - 2 ? ", " : i < n - 1 ? " or " : "")).join("")}', got '${this.tokens
                     .slice(this.i, longest)
                     .map((t) => t.toString())
-                    .join(" ")}`
+                    .join(" ")}'`
             )
 
             this.failedMatches = []

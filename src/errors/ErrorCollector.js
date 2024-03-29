@@ -24,7 +24,7 @@ export class ErrorCollector {
     }
 
     throw() {
-        if (this.errors) {
+        if (this.errors.length > 0) {
             throw this.errors[0]
         }
     }

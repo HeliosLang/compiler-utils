@@ -6,7 +6,6 @@ export {}
 
 /**
  * @typedef {{
- *   isEqual: (other: Token) => boolean
  *   site: Site
  *   toString: (preserveWhitespace?: boolean) => string
  * }} Token
