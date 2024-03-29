@@ -55,12 +55,40 @@ export function byteslit(value = None) {
 
 /**
  * @param {string} kind
+ * @param {Option<{length: number} | {minLength: number} | {maxLength: number} | {minLength: number, maxLength: number }>} options
  * @returns {TokenMatcher<Group>}
  */
-export function group(kind) {
+export function group(kind, options = None) {
+    /**
+     * @param {Group} g
+     * @returns {boolean}
+     */
+    function matchLength(g) {
+        if (options) {
+            const n = g.fields.length
+            if ("length" in options) {
+                return n == options.length
+            } else {
+                if ("minLength" in options && n < options.minLength) {
+                    return false
+                }
+
+                if ("maxLength" in options && n > options.maxLength) {
+                    return false
+                }
+
+                return true
+            }
+        } else {
+            return true
+        }
+    }
+
     return {
-        matches: (t) => (t instanceof Group && t.isKind(kind) ? t : None),
-        toString: () => `${kind}...${Group.otherSymbol(kind)}`
+        matches: (t) =>
+            t instanceof Group && t.isKind(kind) && matchLength(t) ? t : None,
+        toString: () =>
+            `${kind}${options && "length" in options ? `<${options.length} entries>` : "..."}${Group.otherSymbol(kind)}`
     }
 }
 
@@ -115,14 +143,14 @@ export const wildcard = {
 
 /**
  * @param {string} s
- * @param {boolean} caseInsensitive
+ * @param {Option<{caseInsensitive: boolean}>} options
  * @returns {TokenMatcher<Word>}
  */
-export function word(s, caseInsensitive = false) {
+export function word(s, options = None) {
     return {
         matches: (t) =>
             t instanceof Word &&
-            (caseInsensitive
+            (options?.caseInsensitive
                 ? t.value.toLowerCase() == s.toLowerCase()
                 : t.value == s)
                 ? t
