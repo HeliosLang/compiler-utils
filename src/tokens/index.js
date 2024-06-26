@@ -19,6 +19,7 @@ export { TokenReader } from "./TokenReader.js"
 export { Word } from "./Word.js"
 
 /**
+ * @typedef {import("./SourceMap.js").SourceMap}
  * @typedef {import("./Token.js").Token} Token
  */
 
