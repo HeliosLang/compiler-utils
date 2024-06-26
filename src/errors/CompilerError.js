@@ -24,7 +24,25 @@ export class CompilerError extends Error {
      * @param {string} msg
      * @returns {CompilerError}
      */
+    static reference(site, msg) {
+        return new CompilerError("ReferenceError", site, msg)
+    }
+
+    /**
+     * @param {Site} site
+     * @param {string} msg
+     * @returns {CompilerError}
+     */
     static syntax(site, msg) {
         return new CompilerError("SyntaxError", site, msg)
+    }
+
+    /**
+     * @param {Site} site
+     * @param {string} msg
+     * @returns {CompilerError}
+     */
+    static type(site, msg) {
+        return new CompilerError("TypeError", site, msg)
     }
 }
