@@ -6,6 +6,7 @@ import { IntLiteral } from "./IntLiteral.js"
 import { StringLiteral } from "./StringLiteral.js"
 import { ByteArrayLiteral } from "./ByteArrayLiteral.js"
 import { bytesToHex, equalsBytes } from "@helios-lang/codec-utils"
+import { BoolLiteral } from "./BoolLiteral.js"
 
 /**
  * @typedef {import("./Token.js").Token} Token
@@ -35,6 +36,20 @@ export const anySymbol = {
 export const anyWord = {
     matches: (t) => (t instanceof Word ? t : None),
     toString: () => "<word>"
+}
+
+/**
+ * @param {Option<boolean>} value
+ * @returns {TokenMatcher<BoolLiteral>}
+ */
+export function boollit(value = None) {
+    return {
+        matches: (t) =>
+            t instanceof BoolLiteral && (value ? t.value === value : true)
+                ? t
+                : None,
+        toString: () => (value ? (value ? "true" : "false") : "true | false")
+    }
 }
 
 /**

@@ -7,6 +7,7 @@ export { Tokenizer } from "./Tokenizer.js"
 export {
     anySymbol,
     anyWord,
+    boollit,
     byteslit,
     group,
     intlit,
