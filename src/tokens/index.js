@@ -10,6 +10,7 @@ export {
     byteslit,
     group,
     intlit,
+    oneOf,
     strlit,
     symbol,
     wildcard,

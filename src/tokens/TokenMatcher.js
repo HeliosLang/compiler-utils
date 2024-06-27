@@ -107,6 +107,28 @@ export function intlit(value = None) {
 }
 
 /**
+ * @template {TokenMatcher[]} Matchers
+ * @param {[...Matchers]} matchers
+ * @returns {TokenMatcher<Matchers extends Array<TokenMatcher<infer T>> ? T : never>}
+ */
+export function oneOf(matchers) {
+    return {
+        matches: (t) => {
+            for (let matcher of matchers) {
+                const match = matcher.matches(t)
+
+                if (match) {
+                    return /** @type {any} */ (match)
+                }
+            }
+
+            return None
+        },
+        toString: () => matchers.map((m) => m.toString()).join(" | ")
+    }
+}
+
+/**
  * @param {Option<string>} value
  * @returns {TokenMatcher<StringLiteral>}
  */
