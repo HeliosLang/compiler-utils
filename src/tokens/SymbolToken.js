@@ -17,6 +17,12 @@ export class SymbolToken {
     value
 
     /**
+     * @readonly
+     * @type {Site}
+     */
+    site
+
+    /**
      * @param {string} value
      * @param {Site} site
      */

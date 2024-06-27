@@ -97,6 +97,37 @@ export class TokenReader {
     }
 
     /**
+     * Looks for the next token that matches the `matcher`
+     * Returns both the token and another TokenReader for preceding tokens
+     * @template {TokenMatcher} Matcher
+     * @param {Matcher} matcher
+     * @returns {[Option<Matcher extends TokenMatcher<infer T> ? AugmentGroup<T> : never>, TokenReader]}
+     */
+    find(matcher) {
+        const i0 = this.i
+        for (let i = i0; i < this.tokens.length; i++) {
+            const t = this.tokens[i]
+
+            let m
+
+            if ((m = matcher.matches(t))) {
+                this.i = i + 1
+                return [
+                    /** @type {any} */ (m),
+                    new TokenReader(this.tokens.slice(i0, i), this.errors)
+                ]
+            }
+        }
+
+        this.errors.syntax(
+            this.tokens[this.tokens.length - 1].site,
+            `${matcher.toString()} not found`
+        )
+
+        return [None, new TokenReader([], this.errors)]
+    }
+
+    /**
      * @returns {boolean}
      */
     isEof() {

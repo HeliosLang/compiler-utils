@@ -4,7 +4,6 @@ import { Word } from "./Word.js"
 import { anyWord, group, symbol, wildcard, word } from "./TokenMatcher.js"
 import { strictEqual, throws } from "node:assert"
 import { Group } from "./Group.js"
-import { None } from "@helios-lang/type-utils"
 
 /**
  * @typedef {import("./Token.js").Token} Token
@@ -72,5 +71,31 @@ describe(`${TokenReader.name}([con bool false])`, () => {
 
         r.endMatch()
         r.errors.throw()
+    })
+
+    it("finds bool in [con bool false] and returns correct readers", () => {
+        let r = new TokenReader(testTokens)
+
+        const [t, ra] = r.find(word("bool"))
+
+        if (t) {
+            strictEqual(
+                !!ra.matches(word("con")) && !!r.matches(word("false")),
+                true
+            )
+        }
+
+        r.endMatch()
+        r.errors.throw()
+    })
+
+    it("doesn't find ; in [con bool false]", () => {
+        let r = new TokenReader(testTokens)
+
+        const [t, ra] = r.find(symbol(";"))
+
+        throws(() => {
+            r.errors.throw()
+        })
     })
 })
