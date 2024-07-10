@@ -1,5 +1,8 @@
+export { BoolLiteral } from "./BoolLiteral.js"
+export { ByteArrayLiteral } from "./ByteArrayLiteral.js"
 export { Comment } from "./Comment.js"
 export { Group } from "./Group.js"
+export { IntLiteral } from "./IntLiteral.js"
 export { REAL_PRECISION, RealLiteral } from "./RealLiteral.js"
 export { Source } from "./Source.js"
 export { StringLiteral } from "./StringLiteral.js"
