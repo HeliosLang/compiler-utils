@@ -18,6 +18,7 @@ export {
     word
 } from "./TokenMatcher.js"
 export { TokenReader } from "./TokenReader.js"
+export { TokenSite } from "./TokenSite.js"
 export { Word } from "./Word.js"
 
 /**
