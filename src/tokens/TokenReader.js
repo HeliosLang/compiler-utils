@@ -209,24 +209,31 @@ export class TokenReader {
     }
 
     /**
+     * @param {boolean | string} throwFail - defaults to true. `throwFail` as a string specifies a custom error message if all matches failed
      * @returns {TokenReader}
      */
-    endMatch() {
+    endMatch(throwFail = true) {
         const n = this.failedMatches.length
 
         if (n > 0) {
-            const longest = this.failedMatches.reduce(
-                (prev, fm) => Math.max(prev, fm.length),
-                0
-            )
+            if (throwFail) {
+                if (typeof throwFail == "string") {
+                    this.errors.syntax(this.tokens[this.i].site, throwFail)
+                } else {
+                    const longest = this.failedMatches.reduce(
+                        (prev, fm) => Math.max(prev, fm.length),
+                        0
+                    )
 
-            this.errors.syntax(
-                this.tokens[this.i].site,
-                `expected '${this.failedMatches.map((fm, i) => fm.map((f) => f.toString()).join(" ") + (i < n - 2 ? ", " : i < n - 1 ? " or " : "")).join("")}', got '${this.tokens
-                    .slice(this.i, longest)
-                    .map((t) => t.toString())
-                    .join(" ")}'`
-            )
+                    this.errors.syntax(
+                        this.tokens[this.i].site,
+                        `expected '${this.failedMatches.map((fm, i) => fm.map((f) => f.toString()).join(" ") + (i < n - 2 ? ", " : i < n - 1 ? " or " : "")).join("")}', got '${this.tokens
+                            .slice(this.i, longest)
+                            .map((t) => t.toString())
+                            .join(" ")}'`
+                    )
+                }
+            }
 
             this.failedMatches = []
         }
