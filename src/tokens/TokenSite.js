@@ -1,4 +1,7 @@
+import { comparePos } from "../errors/Site.js"
+
 /**
+ * @typedef {import("../errors/Site.js").Pos} Pos
  * @typedef {import("../errors/Site.js").Site} Site
  */
 
@@ -32,6 +35,33 @@ export class TokenSite {
     }
 
     /**
+     * @param {Site} a
+     * @param {Site} b
+     * @returns {TokenSite}
+     */
+    static merge(a, b) {
+        const file = a.file
+
+        let startLine = a.line
+        let startColumn = a.column
+
+        if (comparePos(a, b) > 0) {
+            startLine = b.line
+            startColumn = b.column
+        }
+
+        let endLine = a.end?.line ?? a.line
+        let endColumn = a.end?.column ?? a.column
+
+        if (comparePos(a.end ?? a, b.end ?? b) > 0) {
+            endLine = b.end?.line ?? b.line
+            endColumn = b.end?.column ?? b.column
+        }
+
+        return new TokenSite(file, startLine, startColumn, endLine, endColumn)
+    }
+
+    /**
      * @type {number}
      */
     get line() {
@@ -43,6 +73,16 @@ export class TokenSite {
      */
     get column() {
         return this.startColumn
+    }
+
+    /**
+     * @type {Pos}
+     */
+    get end() {
+        return {
+            line: this.endLine,
+            column: this.endColumn
+        }
     }
 
     /**

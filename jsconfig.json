@@ -10,7 +10,7 @@
         "moduleResolution": "nodenext",
         "module": "nodenext",
         "target": "esnext",
-        "lib": ["es6"]
+        "lib": ["es2020"]
     },
     "exclude": ["node_modules", "**/*.d.ts"],
     "include": ["src/**/*.js", "node_modules/@helios-lang/type-utils"]
