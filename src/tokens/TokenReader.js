@@ -101,9 +101,10 @@ export class TokenReader {
      * Returns both the token and another TokenReader for preceding tokens
      * @template {TokenMatcher} Matcher
      * @param {Matcher} matcher
+     * @param {boolean} errorIfNotFound
      * @returns {[Option<Matcher extends TokenMatcher<infer T> ? AugmentGroup<T> : never>, TokenReader]}
      */
-    find(matcher) {
+    find(matcher, errorIfNotFound = true) {
         const i0 = this.i
         for (let i = i0; i < this.tokens.length; i++) {
             const t = this.tokens[i]
@@ -119,10 +120,12 @@ export class TokenReader {
             }
         }
 
-        this.errors.syntax(
-            this.tokens[this.tokens.length - 1].site,
-            `${matcher.toString()} not found`
-        )
+        if (errorIfNotFound) {
+            this.errors.syntax(
+                this.tokens[this.tokens.length - 1].site,
+                `${matcher.toString()} not found`
+            )
+        }
 
         return [None, new TokenReader([], this.errors)]
     }
@@ -130,15 +133,21 @@ export class TokenReader {
     /**
      * Like `find`, looks for the next token that matches the `matcher`
      * Returns a TokenReader for preceding tokens, keeps the matched token in the buffer
+     * Reads until the end if not found
      * @template {TokenMatcher} Matcher
      * @param {Matcher} matcher
      * @returns {TokenReader}
      */
     readUntil(matcher) {
-        const [token, reader] = this.find(matcher)
+        let [token, reader] = this.find(matcher, false)
 
         if (isSome(token)) {
             this.i -= 1
+        } else {
+            reader = new TokenReader(this.tokens, this.errors)
+
+            reader.i = this.i
+            this.i = this.tokens.length
         }
 
         return reader
