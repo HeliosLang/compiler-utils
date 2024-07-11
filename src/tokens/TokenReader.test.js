@@ -98,4 +98,15 @@ describe(`${TokenReader.name}([con bool false])`, () => {
             r.errors.throw()
         })
     })
+
+    it("readWord after readUntil(bool) returns false", () => {
+        let r = new TokenReader(testTokens)
+
+        const ra = r.readUntil(word("bool"))
+
+        strictEqual(
+            !!ra.matches(word("con")) && !!r.matches(word("bool")),
+            true
+        )
+    })
 })

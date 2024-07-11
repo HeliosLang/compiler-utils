@@ -128,6 +128,23 @@ export class TokenReader {
     }
 
     /**
+     * Like `find`, looks for the next token that matches the `matcher`
+     * Returns a TokenReader for preceding tokens, keeps the matched token in the buffer
+     * @template {TokenMatcher} Matcher
+     * @param {Matcher} matcher
+     * @returns {TokenReader}
+     */
+    readUntil(matcher) {
+        const [token, reader] = this.find(matcher)
+
+        if (isSome(token)) {
+            this.i -= 1
+        }
+
+        return reader
+    }
+
+    /**
      * @returns {boolean}
      */
     isEof() {
