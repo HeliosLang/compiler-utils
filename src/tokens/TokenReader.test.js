@@ -79,7 +79,7 @@ describe(`${TokenReader.name}([con bool false])`, () => {
         let m
 
         if ((m = r.find(word("bool")))) {
-            const [_, ra] = m
+            const [ra] = m
 
             strictEqual(
                 !!ra.matches(word("con")) && !!r.matches(word("false")),

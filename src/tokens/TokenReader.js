@@ -102,7 +102,7 @@ export class TokenReader {
      * @template {TokenMatcher} Matcher
      * @param {Matcher} matcher
      * @param {boolean} errorIfNotFound
-     * @returns {Option<[Matcher extends TokenMatcher<infer T> ? AugmentGroup<T> : never, TokenReader]>}
+     * @returns {Option<[TokenReader, Matcher extends TokenMatcher<infer T> ? AugmentGroup<T> : never]>}
      */
     find(matcher, errorIfNotFound = true) {
         const i0 = this.i
@@ -114,8 +114,8 @@ export class TokenReader {
             if ((m = matcher.matches(t))) {
                 this.i = i + 1
                 return [
-                    /** @type {any} */ (m),
-                    new TokenReader(this.tokens.slice(i0, i), this.errors)
+                    new TokenReader(this.tokens.slice(i0, i), this.errors),
+                    /** @type {any} */ (m)
                 ]
             }
         }
@@ -142,7 +142,7 @@ export class TokenReader {
         let m
 
         if ((m = this.find(matcher, false))) {
-            let [_, reader] = m
+            let [reader] = m
 
             this.i -= 1
 
