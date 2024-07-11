@@ -76,9 +76,11 @@ describe(`${TokenReader.name}([con bool false])`, () => {
     it("finds bool in [con bool false] and returns correct readers", () => {
         let r = new TokenReader(testTokens)
 
-        const [t, ra] = r.find(word("bool"))
+        let m
 
-        if (t) {
+        if ((m = r.find(word("bool")))) {
+            const [_, ra] = m
+
             strictEqual(
                 !!ra.matches(word("con")) && !!r.matches(word("false")),
                 true
@@ -92,7 +94,7 @@ describe(`${TokenReader.name}([con bool false])`, () => {
     it("doesn't find ; in [con bool false]", () => {
         let r = new TokenReader(testTokens)
 
-        const [t, ra] = r.find(symbol(";"))
+        r.find(symbol(";"))
 
         throws(() => {
             r.errors.throw()
