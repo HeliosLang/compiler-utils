@@ -91,7 +91,7 @@ export class Tokenizer {
      * @param {Source} source
      * @param {TokenizerOptions} options
      */
-    constructor(source, options) {
+    constructor(source, options = {}) {
         this.validFirstLetters = new Set(
             (
                 DEFAULT_VALID_FIRST_LETTERS +
