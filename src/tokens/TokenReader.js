@@ -131,6 +131,40 @@ export class TokenReader {
     }
 
     /**
+     * Looks for the last token that matches the `matcher`
+     * Returns both the token and another TokenReader for preceding tokens
+     * @template {TokenMatcher} Matcher
+     * @param {Matcher} matcher
+     * @param {boolean} errorIfNotFound
+     * @returns {Option<[TokenReader, Matcher extends TokenMatcher<infer T> ? AugmentGroup<T> : never]>}
+     */
+    findLast(matcher, errorIfNotFound = true) {
+        const i0 = this.i
+        for (let i = this.tokens.length - 1; i >= i0; i--) {
+            const t = this.tokens[i]
+
+            let m
+
+            if ((m = matcher.matches(t))) {
+                this.i = i + 1
+                return [
+                    new TokenReader(this.tokens.slice(i0, i), this.errors),
+                    /** @type {any} */ (m)
+                ]
+            }
+        }
+
+        if (errorIfNotFound) {
+            this.errors.syntax(
+                this.tokens[i0].site,
+                `${matcher.toString()} not found`
+            )
+        }
+
+        return None
+    }
+
+    /**
      * Like `find`, looks for the next token that matches the `matcher`
      * Returns a TokenReader for preceding tokens, keeps the matched token in the buffer
      * Reads until the end if not found

@@ -91,6 +91,26 @@ describe(`${TokenReader.name}([con bool false])`, () => {
         r.errors.throw()
     })
 
+    it("reading after findLast(bool) returns false", () => {
+        let tt = testTokens.slice(0, 2).concat(testTokens.slice(1))
+        let r = new TokenReader(tt)
+
+        let m
+
+        if ((m = r.findLast(word("bool")))) {
+            const [ra] = m
+
+            strictEqual(
+                !!ra.matches(word("con"), word("bool")) &&
+                    !!r.matches(word("false")),
+                true
+            )
+        }
+
+        r.endMatch()
+        r.errors.throw()
+    })
+
     it("doesn't find ; in [con bool false]", () => {
         let r = new TokenReader(testTokens)
 
