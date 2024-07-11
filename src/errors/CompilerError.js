@@ -20,6 +20,27 @@ export class CompilerError extends Error {
     }
 
     /**
+     * @template A
+     * @template B
+     * @param {() => A} callback
+     * @param {() => B} onError
+     * @returns {A | B}
+     */
+    static catch(callback, onError) {
+        try {
+            const res = callback()
+
+            return res
+        } catch (e) {
+            if (e instanceof CompilerError) {
+                return onError()
+            } else {
+                throw e
+            }
+        }
+    }
+
+    /**
      * @param {Site} site
      * @param {string} msg
      * @returns {CompilerError}
