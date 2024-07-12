@@ -1,6 +1,6 @@
 {
     "name": "@helios-lang/compiler-utils",
-    "version": "0.1.44",
+    "version": "0.1.45",
     "description": "Helios language compiler library",
     "main": "src/index.js",
     "types": "types/index.d.ts",
