@@ -1,4 +1,4 @@
-import { None, isSome } from "@helios-lang/type-utils"
+import { None, isNone, isSome } from "@helios-lang/type-utils"
 import { ErrorCollector } from "../errors/ErrorCollector.js"
 import { Group } from "./Group.js"
 import { IntLiteral } from "./IntLiteral.js"
@@ -133,32 +133,76 @@ export class TokenReader {
     /**
      * Looks for the last token that matches the `matcher`
      * Returns both the token and another TokenReader for preceding tokens
-     * @template {TokenMatcher} Matcher
-     * @param {Matcher} matcher
-     * @param {boolean} errorIfNotFound
-     * @returns {Option<[TokenReader, Matcher extends TokenMatcher<infer T> ? AugmentGroup<T> : never]>}
+     * @template {TokenMatcher[]} Matchers
+     * @param {[...Matchers]} matchers
+     * @returns {Option<[TokenReader, ...MatcherTokens<Matchers>]>}
      */
-    findLast(matcher, errorIfNotFound = true) {
+    findLast(...matchers) {
         const i0 = this.i
-        for (let i = this.tokens.length - 1; i >= i0; i--) {
-            const t = this.tokens[i]
 
-            let m
+        const res = /** @type {any} */ (this.findLastMatchInternal(...matchers))
 
-            if ((m = matcher.matches(t))) {
-                this.i = i + 1
-                return [
-                    new TokenReader(this.tokens.slice(i0, i), this.errors),
-                    /** @type {any} */ (m)
-                ]
-            }
-        }
-
-        if (errorIfNotFound) {
+        if (isNone(res)) {
             this.errors.syntax(
                 this.tokens[i0].site,
-                `${matcher.toString()} not found`
+                `${matchers.map((m) => m.toString()).join(", ")} not found`
             )
+        }
+
+        return res
+    }
+
+    /**
+     * Looks for the last token that matches the `matcher`
+     * Returns both the token and another TokenReader for preceding tokens
+     * @template {TokenMatcher[]} Matchers
+     * @param {[...Matchers]} matchers
+     * @returns {Option<[TokenReader, ...MatcherTokens<Matchers>]>}
+     */
+    findLastMatch(...matchers) {
+        const res = /** @type {any} */ (this.findLastMatchInternal(...matchers))
+
+        if (isNone(res)) {
+            // TODO: add entry to `this.failedMatches`
+        }
+
+        return res
+    }
+
+    /**
+     * @private
+     * @template {TokenMatcher[]} Matchers
+     * @param {[...Matchers]} matchers
+     * @returns {Option<[TokenReader, ...MatcherTokens<Matchers>]>}
+     */
+    findLastMatchInternal(...matchers) {
+        const n = matchers.length
+
+        const i0 = this.i
+        for (let i = this.tokens.length - 1; i >= i0; i--) {
+            if (this.tokens.length - i >= n) {
+                const res = matchers.every((m, j) =>
+                    m.matches(this.tokens[i + j])
+                )
+
+                if (res) {
+                    const matched = /** @type {any} */ (
+                        this.tokens
+                            .slice(i, i + n)
+                            .map((t) =>
+                                t instanceof Group ? augmentGroup(this, t) : t
+                            )
+                    )
+
+                    this.i = i + n
+                    this.failedMatches = []
+
+                    return /** @type {any} */ ([
+                        new TokenReader(this.tokens.slice(i0, i), this.errors),
+                        ...matched
+                    ])
+                }
+            }
         }
 
         return None
@@ -205,8 +249,13 @@ export class TokenReader {
 
     /**
      * @template {TokenMatcher[]} Matchers
+     * @typedef {Matchers extends [TokenMatcher<infer T>] ? AugmentGroup<T> : {[M in keyof Matchers]: Matchers[M] extends TokenMatcher<infer T> ? AugmentGroup<T> : never}} MatcherTokens
+     */
+
+    /**
+     * @template {TokenMatcher[]} Matchers
      * @param  {[...Matchers]} matchers
-     * @returns {Option<Matchers extends [TokenMatcher<infer T>] ? AugmentGroup<T> : {[M in keyof Matchers]: Matchers[M] extends TokenMatcher<infer T> ? AugmentGroup<T> : never}>}
+     * @returns {Option<MatcherTokens<Matchers>>}
      */
     matches(...matchers) {
         const n = matchers.length
@@ -218,18 +267,11 @@ export class TokenReader {
 
             if (res) {
                 const matched = /** @type {any} */ (
-                    this.tokens.slice(this.i, this.i + n).map((t) =>
-                        t instanceof Group
-                            ? new Group(
-                                  t.kind,
-                                  t.fields.map(
-                                      (f) => new TokenReader(f, this.errors)
-                                  ),
-                                  t.separators,
-                                  t.site
-                              )
-                            : t
-                    )
+                    this.tokens
+                        .slice(this.i, this.i + n)
+                        .map((t) =>
+                            t instanceof Group ? augmentGroup(this, t) : t
+                        )
                 )
                 this.failedMatches = []
                 this.i += n
@@ -428,4 +470,18 @@ export class TokenReader {
             return w
         }
     }
+}
+
+/**
+ * @param {TokenReader} r
+ * @param {Group<Token[]>} t
+ * @returns {Group<TokenReader>}
+ */
+function augmentGroup(r, t) {
+    return new Group(
+        t.kind,
+        t.fields.map((f) => new TokenReader(f, r.errors)),
+        t.separators,
+        t.site
+    )
 }
