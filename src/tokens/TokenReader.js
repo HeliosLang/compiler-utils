@@ -263,17 +263,19 @@ export class TokenReader {
      * Like `find`, looks for the next token that matches the `matcher`
      * Returns a TokenReader for preceding tokens, keeps the matched token in the buffer
      * Reads until the end if not found
-     * @template {TokenMatcher} Matcher
-     * @param {Matcher} matcher
+     * @template {TokenMatcher[]} Matchers
+     * @param {[...Matchers]} matchers
      * @returns {TokenReader}
      */
-    readUntil(matcher) {
+    readUntil(...matchers) {
+        const n = matchers.length
+
         let m
 
-        if ((m = this.findNextInternal(matcher))) {
+        if ((m = this.findNextInternal(...matchers))) {
             let [reader] = m
 
-            this.i -= 1
+            this.i -= n
 
             return reader
         } else {
