@@ -78,7 +78,7 @@ describe(`${TokenReader.name}([con bool false])`, () => {
 
         let m
 
-        if ((m = r.find(word("bool")))) {
+        if ((m = r.findNext(word("bool")))) {
             const [ra] = m
 
             strictEqual(
@@ -126,7 +126,7 @@ describe(`${TokenReader.name}([con bool false])`, () => {
     it("doesn't find ; in [con bool false]", () => {
         let r = new TokenReader(testTokens)
 
-        r.find(symbol(";"))
+        r.findNext(symbol(";"))
 
         throws(() => {
             r.errors.throw()

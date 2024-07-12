@@ -99,32 +99,76 @@ export class TokenReader {
     /**
      * Looks for the next token that matches the `matcher`
      * Returns both the token and another TokenReader for preceding tokens
-     * @template {TokenMatcher} Matcher
-     * @param {Matcher} matcher
-     * @param {boolean} errorIfNotFound
-     * @returns {Option<[TokenReader, Matcher extends TokenMatcher<infer T> ? AugmentGroup<T> : never]>}
+     * @template {TokenMatcher[]} Matchers
+     * @param {[...Matchers]} matchers
+     * @returns {Option<[TokenReader, ...MatcherTokens<Matchers>]>}
      */
-    find(matcher, errorIfNotFound = true) {
+    findNext(...matchers) {
         const i0 = this.i
-        for (let i = i0; i < this.tokens.length; i++) {
-            const t = this.tokens[i]
 
-            let m
+        const res = /** @type {any} */ (this.findNextInternal(...matchers))
 
-            if ((m = matcher.matches(t))) {
-                this.i = i + 1
-                return [
-                    new TokenReader(this.tokens.slice(i0, i), this.errors),
-                    /** @type {any} */ (m)
-                ]
-            }
+        if (isNone(res)) {
+            this.errors.syntax(
+                this.tokens[i0].site,
+                `${matchers.map((m) => m.toString()).join(", ")} not found`
+            )
         }
 
-        if (errorIfNotFound) {
-            this.errors.syntax(
-                this.tokens[this.tokens.length - 1].site,
-                `${matcher.toString()} not found`
-            )
+        return res
+    }
+
+    /**
+     * Looks for the last token that matches the `matcher`
+     * Returns both the token and another TokenReader for preceding tokens
+     * @template {TokenMatcher[]} Matchers
+     * @param {[...Matchers]} matchers
+     * @returns {Option<[TokenReader, ...MatcherTokens<Matchers>]>}
+     */
+    findNextMatch(...matchers) {
+        const res = /** @type {any} */ (this.findNextInternal(...matchers))
+
+        if (isNone(res)) {
+            // TODO: add entry to `this.failedMatches`
+        }
+
+        return res
+    }
+
+    /**
+     * @private
+     * @template {TokenMatcher[]} Matchers
+     * @param {[...Matchers]} matchers
+     * @returns {Option<[TokenReader, ...MatcherTokens<Matchers>]>}
+     */
+    findNextInternal(...matchers) {
+        const n = matchers.length
+
+        const i0 = this.i
+        for (let i = i0; i < this.tokens.length; i++) {
+            if (this.tokens.length - i >= n) {
+                const res = matchers.every((m, j) =>
+                    m.matches(this.tokens[i + j])
+                )
+
+                if (res) {
+                    const matched = /** @type {any} */ (
+                        this.tokens
+                            .slice(i, i + n)
+                            .map((t) =>
+                                t instanceof Group ? augmentGroup(this, t) : t
+                            )
+                    )
+
+                    this.i = i + n
+                    this.failedMatches = []
+
+                    return /** @type {any} */ ([
+                        new TokenReader(this.tokens.slice(i0, i), this.errors),
+                        ...matched
+                    ])
+                }
+            }
         }
 
         return None
@@ -140,7 +184,7 @@ export class TokenReader {
     findLast(...matchers) {
         const i0 = this.i
 
-        const res = /** @type {any} */ (this.findLastMatchInternal(...matchers))
+        const res = /** @type {any} */ (this.findLastInternal(...matchers))
 
         if (isNone(res)) {
             this.errors.syntax(
@@ -160,7 +204,7 @@ export class TokenReader {
      * @returns {Option<[TokenReader, ...MatcherTokens<Matchers>]>}
      */
     findLastMatch(...matchers) {
-        const res = /** @type {any} */ (this.findLastMatchInternal(...matchers))
+        const res = /** @type {any} */ (this.findLastInternal(...matchers))
 
         if (isNone(res)) {
             // TODO: add entry to `this.failedMatches`
@@ -175,7 +219,7 @@ export class TokenReader {
      * @param {[...Matchers]} matchers
      * @returns {Option<[TokenReader, ...MatcherTokens<Matchers>]>}
      */
-    findLastMatchInternal(...matchers) {
+    findLastInternal(...matchers) {
         const n = matchers.length
 
         const i0 = this.i
@@ -219,7 +263,7 @@ export class TokenReader {
     readUntil(matcher) {
         let m
 
-        if ((m = this.find(matcher, false))) {
+        if ((m = this.findNextInternal(matcher))) {
             let [reader] = m
 
             this.i -= 1
