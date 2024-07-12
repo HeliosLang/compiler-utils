@@ -51,6 +51,13 @@ export class TokenReader {
     }
 
     /**
+     * @type {Token[]}
+     */
+    get rest() {
+        return this.tokens.slice(this.i)
+    }
+
+    /**
      * @template {TokenMatcher[]} Matchers
      * @param  {[...Matchers]} matchers
      * @returns {TokenReader}
