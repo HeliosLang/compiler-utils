@@ -523,6 +523,10 @@ export class TokenReader {
             return w
         }
     }
+
+    unreadToken() {
+        this.i = Math.max(this.i - 1, 0)
+    }
 }
 
 /**
