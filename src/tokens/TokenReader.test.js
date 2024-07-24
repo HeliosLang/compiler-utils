@@ -143,4 +143,12 @@ describe(`${TokenReader.name}([con bool false])`, () => {
             true
         )
     })
+
+    it("isEof is true after ending", () => {
+        let r = new TokenReader(testTokens)
+
+        r.end()
+
+        strictEqual(r.isEof(), true)
+    })
 })

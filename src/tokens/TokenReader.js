@@ -99,7 +99,10 @@ export class TokenReader {
 
     end() {
         if (this.i < this.tokens.length) {
+            // TODO: should we merge the contexts of all the remaining tokens
             this.errors.syntax(this.tokens[this.i].site, "unexpected tokens")
+
+            this.i = this.tokens.length
         }
     }
 
