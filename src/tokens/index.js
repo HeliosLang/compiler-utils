@@ -16,6 +16,7 @@ export {
     group,
     intlit,
     oneOf,
+    reallit,
     strlit,
     symbol,
     wildcard,

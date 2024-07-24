@@ -7,6 +7,7 @@ import { StringLiteral } from "./StringLiteral.js"
 import { ByteArrayLiteral } from "./ByteArrayLiteral.js"
 import { bytesToHex, equalsBytes } from "@helios-lang/codec-utils"
 import { BoolLiteral } from "./BoolLiteral.js"
+import { RealLiteral } from "./RealLiteral.js"
 
 /**
  * @typedef {import("./Token.js").Token} Token
@@ -141,6 +142,14 @@ export function oneOf(matchers) {
         },
         toString: () => matchers.map((m) => m.toString()).join(" | ")
     }
+}
+
+/**
+ * @type {TokenMatcher<RealLiteral>}
+ */
+export const reallit = {
+    matches: (t) => (t instanceof RealLiteral ? t : None),
+    toString: () => "<real>"
 }
 
 /**
