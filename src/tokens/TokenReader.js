@@ -1,8 +1,6 @@
 import { None, isNone, isSome } from "@helios-lang/type-utils"
 import { ErrorCollector } from "../errors/ErrorCollector.js"
 import { Group } from "./Group.js"
-import { IntLiteral } from "./IntLiteral.js"
-import { SymbolToken } from "./SymbolToken.js"
 import { TokenSite } from "./TokenSite.js"
 import { Word } from "./Word.js"
 

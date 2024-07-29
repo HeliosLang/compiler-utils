@@ -1,4 +1,4 @@
-import { None } from "@helios-lang/type-utils"
+import { None, isNone, isSome } from "@helios-lang/type-utils"
 import { SourceWriter } from "./SourceWriter.js"
 import { SymbolToken } from "./SymbolToken.js"
 import { TokenSite } from "./TokenSite.js"
@@ -77,14 +77,14 @@ export class Group {
     }
 
     /**
-     * @param {?string} kind
-     * @param {number | null} nFields
+     * @param {Option<string>} kind
+     * @param {Option<number>} nFields
      * @returns {boolean}
      */
-    isGroup(kind = null, nFields = null) {
-        const nFieldsOk = nFields === null || nFields == this.fields.length
+    isGroup(kind = None, nFields = None) {
+        const nFieldsOk = isNone(nFields) || nFields == this.fields.length
 
-        if (kind !== null) {
+        if (isSome(kind)) {
             return this.kind == kind && nFieldsOk
         } else {
             return nFieldsOk

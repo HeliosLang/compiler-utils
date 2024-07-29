@@ -28,6 +28,7 @@ import { Comment } from "./Comment.js"
  *   tokenizeReal?: boolean
  *   preserveComments?: boolean
  *   allowLeadingZeroes?: boolean
+ *   errorCollector?: ErrorCollector
  * }} TokenizerOptions
  */
 
@@ -105,7 +106,7 @@ export class Tokenizer {
 
         this.sourceIndex = new SourceIndex(source, options.sourceMap)
         this.tokens = [] // reset to empty to list at start of tokenize()
-        this.errors = new ErrorCollector()
+        this.errors = options.errorCollector ?? new ErrorCollector()
     }
 
     /**
