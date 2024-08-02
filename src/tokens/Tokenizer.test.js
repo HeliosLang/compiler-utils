@@ -9,7 +9,7 @@ import { IntLiteral } from "./IntLiteral.js"
 describe(Tokenizer.name, () => {
     it("tokenizes #54686543616B654973414C6965 as single ByteArrayLiteral", () => {
         const tokenizer = new Tokenizer(
-            new Source("", "#54686543616B654973414C6965"),
+            new Source("#54686543616B654973414C6965"),
             {}
         )
 
@@ -29,7 +29,7 @@ describe(Tokenizer.name, () => {
 
     it("tokenizes 000000000000000000000000000000000000012345 as 12345 if leading zeroes is allowed", () => {
         const tokenizer = new Tokenizer(
-            new Source("", "000000000000000000000000000000000000012345"),
+            new Source("000000000000000000000000000000000000012345"),
             { allowLeadingZeroes: true }
         )
 
@@ -49,7 +49,7 @@ describe(Tokenizer.name, () => {
 
     it("fails to tokenize 000000000000000000000000000000000000012345 is leading zeroes isn't allowed", () => {
         const tokenizer = new Tokenizer(
-            new Source("", "000000000000000000000000000000000000012345"),
+            new Source("000000000000000000000000000000000000012345"),
             { allowLeadingZeroes: false }
         )
 

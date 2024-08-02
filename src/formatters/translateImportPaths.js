@@ -20,7 +20,7 @@ import { SourceWriter } from "../tokens/SourceWriter.js"
  * @returns {string}
  */
 export function translateImportPaths(raw, translator) {
-    const tokens = new Tokenizer(new Source("", raw), {
+    const tokens = new Tokenizer(new Source(raw), {
         preserveComments: true
     }).tokenize()
     const w = new SourceWriter()

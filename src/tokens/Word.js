@@ -18,6 +18,12 @@ export class Word {
     value
 
     /**
+     * @readonly
+     * @type {Site}
+     */
+    site
+
+    /**
      * @param {Site} site
      * @param {string} value
      */

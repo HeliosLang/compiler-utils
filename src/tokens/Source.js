@@ -1,4 +1,10 @@
 /**
+ * @typedef {{
+ *   name?: string
+ * }} SourceOptions
+ */
+
+/**
  * A Source instance wraps a string so we can use it cheaply as a reference inside a Site.
  * Also used by VSCode plugin
  */
@@ -7,21 +13,21 @@ export class Source {
      * @readonly
      * @type {string}
      */
-    name
+    content
 
     /**
      * @readonly
      * @type {string}
      */
-    content
+    name
 
     /**
-     * @param {string} name
      * @param {string} content
+     * @param {SourceOptions} options
      */
-    constructor(name, content) {
-        this.name = name
+    constructor(content, options = {}) {
         this.content = content
+        this.name = options.name ?? "unknown"
     }
 
     /**

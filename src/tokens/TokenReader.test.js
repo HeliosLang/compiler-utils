@@ -32,7 +32,6 @@ describe(`${TokenReader.name}([con bool false])`, () => {
         } else {
             throws(() => {
                 r.endMatch()
-                console.log(r.errors.errors.length)
                 r.errors.throw()
             })
         }

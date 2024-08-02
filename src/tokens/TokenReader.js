@@ -351,8 +351,9 @@ export class TokenReader {
 
         if (n > 0) {
             if (throwFail) {
+                const i = Math.min(this.i, this.tokens.length - 1)
                 if (typeof throwFail == "string") {
-                    this.errors.syntax(this.tokens[this.i].site, throwFail)
+                    this.errors.syntax(this.tokens[i].site, throwFail)
                 } else {
                     const longest = this.failedMatches.reduce(
                         (prev, fm) => Math.max(prev, fm.length),
@@ -360,7 +361,7 @@ export class TokenReader {
                     )
 
                     this.errors.syntax(
-                        this.tokens[this.i].site,
+                        this.tokens[i].site,
                         `expected '${this.failedMatches.map((fm, i) => fm.map((f) => f.toString()).join(" ") + (i < n - 2 ? ", " : i < n - 1 ? " or " : "")).join("")}', got '${this.tokens
                             .slice(this.i, longest)
                             .map((t) => t.toString())

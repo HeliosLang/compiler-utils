@@ -5,7 +5,7 @@ import { Source, StringLiteral, Tokenizer, Word } from "../tokens/index.js"
  * @returns {[string, string]}
  */
 export function readHeader(src) {
-    const tokenizer = new Tokenizer(new Source("", src), {
+    const tokenizer = new Tokenizer(new Source(src), {
         preserveComments: false
     })
 
