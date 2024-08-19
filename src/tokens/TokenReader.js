@@ -311,7 +311,6 @@ export class TokenReader {
         return this.i >= this.tokens.length
     }
 
-
     /**
      * @template {TokenMatcher[]} Matchers
      * @param  {[...Matchers]} matchers
