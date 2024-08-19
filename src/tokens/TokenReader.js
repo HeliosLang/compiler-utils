@@ -13,6 +13,21 @@ import { Word } from "./Word.js"
  * @typedef {import("./TokenMatcher.js").TokenMatcher<T>} TokenMatcher
  */
 
+/**
+ * @template {Token} T
+ * @typedef {T extends Group ? Group<TokenReader> : T} AugmentGroup
+ */
+
+/**
+ * @template {TokenMatcher[]} Matchers
+ * @typedef {{[M in keyof Matchers]: Matchers[M] extends TokenMatcher<infer T> ? AugmentGroup<T> : never}} MatcherTokens
+ */
+
+/**
+ * @template {(Group<TokenReader> | Token)[]} Tokens
+ * @typedef {Tokens extends [infer T] ? T : Tokens} UnwrapSingleton
+ */
+
 export class TokenReader {
     /**
      * @readonly
@@ -296,20 +311,11 @@ export class TokenReader {
         return this.i >= this.tokens.length
     }
 
-    /**
-     * @template {Token} T
-     * @typedef {T extends Group ? Group<TokenReader> : T} AugmentGroup
-     */
-
-    /**
-     * @template {TokenMatcher[]} Matchers
-     * @typedef {Matchers extends [TokenMatcher<infer T>] ? AugmentGroup<T> : {[M in keyof Matchers]: Matchers[M] extends TokenMatcher<infer T> ? AugmentGroup<T> : never}} MatcherTokens
-     */
 
     /**
      * @template {TokenMatcher[]} Matchers
      * @param  {[...Matchers]} matchers
-     * @returns {Option<MatcherTokens<Matchers>>}
+     * @returns {Option<UnwrapSingleton<MatcherTokens<Matchers>>>}
      */
     matches(...matchers) {
         const n = matchers.length

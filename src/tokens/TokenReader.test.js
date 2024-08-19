@@ -78,7 +78,10 @@ describe(`${TokenReader.name}([con bool false])`, () => {
         let m
 
         if ((m = r.findNext(word("bool")))) {
-            const [ra] = m
+            /**
+             * @satisfies {[TokenReader, Word]}
+             */
+            const [ra, w] = m
 
             strictEqual(
                 !!ra.matches(word("con")) && !!r.matches(word("false")),
@@ -97,7 +100,10 @@ describe(`${TokenReader.name}([con bool false])`, () => {
         let m
 
         if ((m = r.findLast(word("bool")))) {
-            const [ra] = m
+            /**
+             * @satisfies {[TokenReader, Word]}
+             */
+            const [ra, w] = m
 
             strictEqual(
                 !!ra.matches(word("con"), word("bool")) &&
@@ -116,6 +122,9 @@ describe(`${TokenReader.name}([con bool false])`, () => {
         let m
 
         if ((m = r.findLastMatch(word("con"), word("bool")))) {
+            /**
+             * @satisfies {[TokenReader, Word, Word]}
+             */
             const [ra, c, b] = m
 
             strictEqual(ra.isEof() && !!r.matches(word("false")), true)
