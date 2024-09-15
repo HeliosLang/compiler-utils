@@ -11,9 +11,9 @@
 export class Source {
     /**
      * @readonly
-     * @type {string}
+     * @type {string[][]}
      */
-    content
+    contentIndex
 
     /**
      * @readonly
@@ -26,7 +26,16 @@ export class Source {
      * @param {SourceOptions} options
      */
     constructor(content, options = {}) {
-        this.content = content
+        this.rawContent = content
+        // one-step split to utf-8 runes in the content
+        const codePoints = [...content]
+        // heuristic for segment size
+        this.segmentSize = Math.max(
+            100,
+            Math.floor(Math.sqrt(codePoints.length))
+        )
+        this.contentIndex = this.segmentContent(codePoints)
+        this.length = codePoints.length
         this.name = options.name ?? "unknown"
     }
 
@@ -34,18 +43,40 @@ export class Source {
      * Number of characters in source content
      * @type {number}
      */
-    get length() {
-        return this.content.length
+    length
+
+    /**
+     * splits long inputs to segments for more efficient access
+     * @param {string[]} content
+     * @returns {string[][]}
+     */
+    segmentContent(content) {
+        const segments = /* @type string[][] */ []
+        let i = 0
+        while (i < content.length) {
+            const chunk = content.slice(i, i + this.segmentSize)
+            segments.push(chunk)
+            i += this.segmentSize
+        }
+        return segments
     }
 
     /**
-     * Get character from the underlying string.
+     * Get character from the underlying string index
      * Should work fine with utf-8 runes
      * @param {number} i
      * @returns {string}
      */
     getChar(i) {
-        return this.content[i]
+        const segmentIndex = Math.floor(i / this.segmentSize)
+        const segmentOffset = i % this.segmentSize
+        const foundSegment =
+            this.contentIndex[segmentIndex] ||
+            (i == this.length ? [] : undefined)
+        if (!foundSegment) {
+            throw new Error("invalid position in Source")
+        }
+        return foundSegment[segmentOffset]
     }
 
     /**
@@ -76,15 +107,31 @@ export class Source {
             }
         }
 
-        let c = this.content[i]
+        let c = this.getChar(i)
 
         while (isWordChar(c)) {
             chars.push(c)
             i += 1
-            c = this.content[i]
+            c = this.getChar(i)
         }
 
         return chars.join("")
+    }
+
+    /**
+     * @type{[number, number][] | undefined}
+     */
+    lineLengths
+    /*
+     * Calculates the length of each line and the total length up to that line
+     * @returns {[number, number][]}
+     */
+    calcLineLengths() {
+        let accumulator = 0
+        return (this.lineLengths = this.rawContent.split("\n").map((line) => {
+            const len = [...line].length //utf-8 rune count
+            return [len, (accumulator += len + 1)]
+        }))
     }
 
     /**
@@ -93,17 +140,12 @@ export class Source {
      * @returns {[number, number]} - 0-based [line, column]
      */
     getPosition(i) {
-        let col = 0
-        let line = 0
-
-        for (let j = 0; j < i; j++) {
-            if (this.content[j] == "\n") {
-                col = 0
-                line += 1
-            } else {
-                col += 1
-            }
+        const lengths = this.lineLengths || this.calcLineLengths()
+        if (i < 0 || i > this.length) {
+            throw new Error("invalid position in Source")
         }
+        const line = lengths.findIndex(([_, end]) => i < end)
+        const col = i - (line > 0 ? lengths[line - 1][1] : 0)
 
         return [line, col]
     }
@@ -116,7 +158,7 @@ export class Source {
      * @returns {string}
      */
     pretty() {
-        const lines = this.content.split("\n")
+        const lines = this.rawContent.split("\n")
 
         const nLines = lines.length
         const nDigits = Math.max(Math.ceil(Math.log10(nLines)), 2) // line-number is at least two digits
