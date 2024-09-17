@@ -4,6 +4,8 @@
  * }} SourceOptions
  */
 
+import { None } from "@helios-lang/type-utils"
+import { segmentArray } from "@helios-lang/codec-utils"
 /**
  * A Source instance wraps a string so we can use it cheaply as a reference inside a Site.
  * Also used by VSCode plugin
@@ -11,9 +13,30 @@
 export class Source {
     /**
      * @readonly
+     * @type {string}
+     */
+    content
+
+    /**
+     * Number of characters in source content
+     * @type {number}
+     * @readonly
+     */
+    length
+
+    /**
+     * Number of characters in each chunk
+     * @type {number}
+     * @readonly
+     * */
+    chunkSize
+
+    /**
+     * Segemented zones of the source content for more efficient access
+     * @readonly
      * @type {string[][]}
      */
-    contentIndex
+    contentChunks
 
     /**
      * @readonly
@@ -22,43 +45,29 @@ export class Source {
     name
 
     /**
+     * cache of line lengths in input source.  See lineLengths getter.
+     * @type{Option<number[]>}
+     * @private
+     */
+    _lineEndLocations
+
+    /**
      * @param {string} content
      * @param {SourceOptions} options
      */
     constructor(content, options = {}) {
-        this.rawContent = content
+        this.content = content
         // one-step split to utf-8 runes in the content
-        const codePoints = [...content]
-        // heuristic for segment size
-        this.segmentSize = Math.max(
+        const asCodePoints = [...content]
+        // heuristic for chunk size
+        this.chunkSize = Math.max(
             100,
-            Math.floor(Math.sqrt(codePoints.length))
+            Math.floor(Math.sqrt(asCodePoints.length))
         )
-        this.contentIndex = this.segmentContent(codePoints)
-        this.length = codePoints.length
+        this.contentChunks = segmentArray(asCodePoints, this.chunkSize)
+        this.length = asCodePoints.length
         this.name = options.name ?? "unknown"
-    }
-
-    /**
-     * Number of characters in source content
-     * @type {number}
-     */
-    length
-
-    /**
-     * splits long inputs to segments for more efficient access
-     * @param {string[]} content
-     * @returns {string[][]}
-     */
-    segmentContent(content) {
-        const segments = /* @type string[][] */ []
-        let i = 0
-        while (i < content.length) {
-            const chunk = content.slice(i, i + this.segmentSize)
-            segments.push(chunk)
-            i += this.segmentSize
-        }
-        return segments
+        this._lineEndLocations = None
     }
 
     /**
@@ -68,15 +77,16 @@ export class Source {
      * @returns {string}
      */
     getChar(i) {
-        const segmentIndex = Math.floor(i / this.segmentSize)
-        const segmentOffset = i % this.segmentSize
-        const foundSegment =
-            this.contentIndex[segmentIndex] ||
-            (i == this.length ? [] : undefined)
-        if (!foundSegment) {
-            throw new Error("invalid position in Source")
+        const targetChunk =
+            i == this.length
+                ? []
+                : this.contentChunks[Math.floor(i / this.chunkSize)]
+
+        if (!targetChunk) {
+            throw new Error(`invalid position in Source ${this.name}`)
         }
-        return foundSegment[segmentOffset]
+        const offset = i % this.chunkSize
+        return targetChunk[offset]
     }
 
     /**
@@ -118,20 +128,20 @@ export class Source {
         return chars.join("")
     }
 
-    /**
-     * @type{[number, number][] | undefined}
-     */
-    lineLengths
     /*
-     * Calculates the length of each line and the total length up to that line
-     * @returns {[number, number][]}
+     * Returns the location of each line-ending for fast line/column number lookup
+     * @returns {number[]}
      */
-    calcLineLengths() {
-        let accumulator = 0
-        return (this.lineLengths = this.rawContent.split("\n").map((line) => {
-            const len = [...line].length //utf-8 rune count
-            return [len, (accumulator += len + 1)]
-        }))
+    get lineEndLocations() {
+        if (this._lineEndLocations) return this._lineEndLocations
+
+        let lastOffset = 0
+        return (this._lineEndLocations = this.content
+            .split("\n")
+            .map((line) => {
+                const len = [...line].length //utf-8 rune count
+                return (lastOffset += len + 1)
+            }))
     }
 
     /**
@@ -140,12 +150,12 @@ export class Source {
      * @returns {[number, number]} - 0-based [line, column]
      */
     getPosition(i) {
-        const lengths = this.lineLengths || this.calcLineLengths()
+        const lineEndings = this.lineEndLocations
         if (i < 0 || i > this.length) {
             throw new Error("invalid position in Source")
         }
-        const line = lengths.findIndex(([_, end]) => i < end)
-        const col = i - (line > 0 ? lengths[line - 1][1] : 0)
+        const line = lineEndings.findIndex((endOffset) => i < endOffset)
+        const col = i - (line > 0 ? lineEndings[line - 1] : 0)
 
         return [line, col]
     }
@@ -158,7 +168,7 @@ export class Source {
      * @returns {string}
      */
     pretty() {
-        const lines = this.rawContent.split("\n")
+        const lines = this.content.split("\n")
 
         const nLines = lines.length
         const nDigits = Math.max(Math.ceil(Math.log10(nLines)), 2) // line-number is at least two digits
