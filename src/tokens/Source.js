@@ -4,6 +4,8 @@
  * }} SourceOptions
  */
 
+import { None } from "@helios-lang/type-utils"
+import { segmentArray } from "@helios-lang/codec-utils"
 /**
  * A Source instance wraps a string so we can use it cheaply as a reference inside a Site.
  * Also used by VSCode plugin
@@ -16,10 +18,38 @@ export class Source {
     content
 
     /**
+     * Number of characters in source content
+     * @type {number}
+     * @readonly
+     */
+    length
+
+    /**
+     * Number of characters in each chunk
+     * @type {number}
+     * @readonly
+     * */
+    chunkSize
+
+    /**
+     * Segemented zones of the source content for more efficient access
+     * @readonly
+     * @type {string[][]}
+     */
+    contentChunks
+
+    /**
      * @readonly
      * @type {string}
      */
     name
+
+    /**
+     * cache of line lengths in input source.  See lineLengths getter.
+     * @type{Option<number[]>}
+     * @private
+     */
+    _lineEndLocations
 
     /**
      * @param {string} content
@@ -27,25 +57,36 @@ export class Source {
      */
     constructor(content, options = {}) {
         this.content = content
+        // one-step split to utf-8 runes in the content
+        const asCodePoints = [...content]
+        // heuristic for chunk size
+        this.chunkSize = Math.max(
+            100,
+            Math.floor(Math.sqrt(asCodePoints.length))
+        )
+        this.contentChunks = segmentArray(asCodePoints, this.chunkSize)
+        this.length = asCodePoints.length
         this.name = options.name ?? "unknown"
+        this._lineEndLocations = None
     }
 
     /**
-     * Number of characters in source content
-     * @type {number}
-     */
-    get length() {
-        return this.content.length
-    }
-
-    /**
-     * Get character from the underlying string.
+     * Get character from the underlying string index
      * Should work fine with utf-8 runes
      * @param {number} i
      * @returns {string}
      */
     getChar(i) {
-        return this.content[i]
+        const targetChunk =
+            i == this.length
+                ? []
+                : this.contentChunks[Math.floor(i / this.chunkSize)]
+
+        if (!targetChunk) {
+            throw new Error(`invalid position in Source ${this.name}`)
+        }
+        const offset = i % this.chunkSize
+        return targetChunk[offset]
     }
 
     /**
@@ -76,15 +117,31 @@ export class Source {
             }
         }
 
-        let c = this.content[i]
+        let c = this.getChar(i)
 
         while (isWordChar(c)) {
             chars.push(c)
             i += 1
-            c = this.content[i]
+            c = this.getChar(i)
         }
 
         return chars.join("")
+    }
+
+    /*
+     * Returns the location of each line-ending for fast line/column number lookup
+     * @returns {number[]}
+     */
+    get lineEndLocations() {
+        if (this._lineEndLocations) return this._lineEndLocations
+
+        let lastOffset = 0
+        return (this._lineEndLocations = this.content
+            .split("\n")
+            .map((line) => {
+                const len = [...line].length //utf-8 rune count
+                return (lastOffset += len + 1)
+            }))
     }
 
     /**
@@ -93,17 +150,12 @@ export class Source {
      * @returns {[number, number]} - 0-based [line, column]
      */
     getPosition(i) {
-        let col = 0
-        let line = 0
-
-        for (let j = 0; j < i; j++) {
-            if (this.content[j] == "\n") {
-                col = 0
-                line += 1
-            } else {
-                col += 1
-            }
+        const lineEndings = this.lineEndLocations
+        if (i < 0 || i > this.length) {
+            throw new Error("invalid position in Source")
         }
+        const line = lineEndings.findIndex((endOffset) => i < endOffset)
+        const col = i - (line > 0 ? lineEndings[line - 1] : 0)
 
         return [line, col]
     }
