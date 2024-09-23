@@ -41,16 +41,26 @@ export class Group {
     site
 
     /**
-	 
+     * @readonly
+     * @type {string | null}
+     */
+    error
+
+    /**	 
 	 * @param {string} kind - "(", "[" or "{"
 	 * @param {F[]} fields 
      * @param {SymbolToken[]} separators - useful for more accurate errors
      * @param {TokenSite} site 
 	 */
     constructor(kind, fields, separators, site = TokenSite.dummy()) {
-        if (separators.length != Math.max(fields.length - 1, 0)) {
+        const expectCount = Math.max(fields.length - 1, 0)
+        this.error = null
+        if (separators.length > expectCount) {
+            const separatorType = separators[0].value
+            this.error = `'${kind}' group: excess '${separatorType}' - expected ${expectCount}, got ${separators.length}`
+        } else if (separators.length != expectCount) {
             throw new Error(
-                `expected ${Math.max(fields.length - 1, 0)}, got ${separators.length}`
+                `expected ${expectCount}, got ${separators.length}`
             )
         }
 

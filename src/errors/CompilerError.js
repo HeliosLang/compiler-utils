@@ -8,6 +8,29 @@
 
 export class CompilerError extends Error {
     /**
+     * @readonly
+     * @type {CompilerErrorKind}
+     */
+    kind
+
+    /**
+     * @readonly
+     * @type {Site}
+     */
+    site
+
+    /**
+     * @readonly
+     * @type {string}
+     * */
+    originalMessage
+
+    /**
+     * @type {CompilerError[] | null}
+     */
+    otherErrors
+
+    /**
      * @param {CompilerErrorKind} kind
      * @param {Site} site
      * @param {string} msg
@@ -17,6 +40,7 @@ export class CompilerError extends Error {
         this.kind = kind
         this.site = site
         this.originalMessage = msg
+        this.otherErrors = null
     }
 
     /**
