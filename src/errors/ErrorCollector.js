@@ -25,7 +25,9 @@ export class ErrorCollector {
 
     throw() {
         if (this.errors.length > 0) {
-            throw this.errors[0]
+            const [firstError, ...others] = this.errors
+            firstError.otherErrors = others
+            throw firstError
         }
     }
 }

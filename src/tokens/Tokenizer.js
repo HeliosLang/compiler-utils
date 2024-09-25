@@ -854,8 +854,8 @@ export class Tokenizer {
         }
 
         if (separators.length > 0 && separators.length >= fields.length) {
-            this.addSyntaxError(separators[0].site, `trailing comma`)
-        }
+            this.addSyntaxError(separators[separators.length-1].site, `trailing comma`)
+       }
 
         const groupSite = new TokenSite(
             open.site.file,
@@ -865,7 +865,11 @@ export class Tokenizer {
             endSite ? endSite.column : open.site.column
         )
 
-        return new Group(open.value, fields, separators, groupSite)
+        const group = new Group(open.value, fields, separators, groupSite)
+        if (group.error) {
+            this.addSyntaxError(group.site, group.error)
+        }
+        return group
     }
 
     /**
@@ -912,7 +916,9 @@ export class Tokenizer {
                 }
 
                 const group = this.buildGroup(open, current.concat([t]))
-
+                if (group.error) {
+                    this.addSyntaxError(group.site, group.error)
+                }
                 current = stack.pop() ?? []
 
                 current.push(group)
