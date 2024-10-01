@@ -854,8 +854,11 @@ export class Tokenizer {
         }
 
         if (separators.length > 0 && separators.length >= fields.length) {
-            this.addSyntaxError(separators[separators.length-1].site, `trailing comma`)
-       }
+            this.addSyntaxError(
+                separators[separators.length - 1].site,
+                `trailing comma`
+            )
+        }
 
         const groupSite = new TokenSite(
             open.site.file,

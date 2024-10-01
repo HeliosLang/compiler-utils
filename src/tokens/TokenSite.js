@@ -5,6 +5,8 @@ import { comparePos } from "../errors/Site.js"
  * @typedef {import("../errors/Site.js").Site} Site
  */
 
+const DUMMY_FILE_NAME = "::internal"
+
 /**
  * @implements {Site}
  */
@@ -31,7 +33,17 @@ export class TokenSite {
     }
 
     static dummy() {
-        return new TokenSite("::internal", 0, 0)
+        return new TokenSite(DUMMY_FILE_NAME, 0, 0)
+    }
+
+    /**
+     * @param {Site} site
+     * @returns {boolean}
+     */
+    static isDummy(site) {
+        return (
+            site.file == DUMMY_FILE_NAME && site.line == 0 && site.column == 0
+        )
     }
 
     /**
