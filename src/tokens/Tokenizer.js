@@ -184,7 +184,8 @@ export class Tokenizer {
             startLine: start.line,
             startColumn: start.column,
             endLine: end.line,
-            endColumn: end.column
+            endColumn: end.column,
+            alias: start.alias
         })
     }
 
