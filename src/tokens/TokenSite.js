@@ -84,6 +84,10 @@ export class TokenSite {
         this.alias = alias
     }
 
+    /**
+     * In some cases it is easier to work with a dummy TokenSite than Option<TokenSite>
+     * @returns {TokenSite}
+     */
     static dummy() {
         return new TokenSite({
             file: DUMMY_FILE_NAME,
@@ -128,6 +132,12 @@ export class TokenSite {
      * @returns {TokenSite}
      */
     static merge(a, b) {
+        if (TokenSite.isDummy(b)) {
+            return TokenSite.fromSite(a)
+        } else if (TokenSite.isDummy(a)) {
+            return TokenSite.dummy()
+        }
+
         const file = a.file
 
         let startLine = a.line

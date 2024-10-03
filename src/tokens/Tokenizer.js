@@ -179,14 +179,18 @@ export class Tokenizer {
     rangeSite(start) {
         const end = this.currentSite
 
-        return new TokenSite({
-            file: start.file,
-            startLine: start.line,
-            startColumn: start.column,
-            endLine: end.line,
-            endColumn: end.column,
-            alias: start.alias
-        })
+        if (TokenSite.isDummy(end)) {
+            return TokenSite.fromSite(start)
+        } else {
+            return new TokenSite({
+                file: start.file,
+                startLine: start.line,
+                startColumn: start.column,
+                endLine: end.line,
+                endColumn: end.column,
+                alias: start.alias
+            })
+        }
     }
 
     /**
