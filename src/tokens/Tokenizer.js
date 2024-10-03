@@ -869,8 +869,18 @@ export class Tokenizer {
             file: open.site.file,
             startLine: open.site.line,
             startColumn: open.site.column,
-            endLine: endSite ? endSite.line : open.site.line,
-            endColumn: endSite ? endSite.column : open.site.column
+            endLine:
+                endSite && !TokenSite.isDummy(endSite)
+                    ? endSite.line
+                    : !TokenSite.isDummy(open.site)
+                      ? open.site.line
+                      : undefined,
+            endColumn:
+                endSite && !TokenSite.isDummy(endSite)
+                    ? endSite.column
+                    : !TokenSite.isDummy(open.site)
+                      ? open.site.column
+                      : undefined
         })
 
         const group = new Group(open.value, fields, separators, groupSite)
