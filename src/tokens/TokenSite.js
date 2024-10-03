@@ -8,32 +8,108 @@ import { comparePos } from "../errors/Site.js"
 const DUMMY_FILE_NAME = "::internal"
 
 /**
+ * `alias`: the content might have a distinct name in the original Helios source
+ * @typedef {{
+ *   file: string
+ *   startLine: number
+ *   startColumn: number
+ *   endLine?: number
+ *   endColumn?: number
+ *   alias?: string
+ * }} TokenSiteProps
+ */
+/**
  * @implements {Site}
  */
 export class TokenSite {
     /**
-     * @param {string} file
-     * @param {number} startLine - first char of Token, 0-based index
-     * @param {number} startColumn - first char of Token, 0-based index
-     * @param {number} endLine - first char after Token (aka exclusive), 0-based index
-     * @param {number} endColumn - first char after Token (aka exclusive), 0-based index
+     * @readonly
+     * @type {string}
      */
-    constructor(
+    file
+
+    /**
+     * first char of Token, 0-based index
+     * @readonly
+     * @type {number}
+     */
+    startLine
+
+    /**
+     * first char of Token, 0-based index
+     * @readonly
+     * @type {number}
+     */
+    startColumn
+
+    /**
+     * first char after Token (aka exclusive), 0-based index
+     * defaults to startLine
+     * @readonly
+     * @type {number}
+     */
+    endLine
+
+    /**
+     * first char after Token (aka exclusive), 0-based index
+     * defaults to startColumn+1
+     * @readonly
+     * @type {number}
+     */
+    endColumn
+
+    /**
+     * Used for content that has a distinct name in the original Helios source
+     * @readonly
+     * @type {string | undefined}
+     */
+    alias
+
+    /**
+     * @param {TokenSiteProps} props
+     */
+    constructor({
         file,
         startLine,
         startColumn,
         endLine = startLine,
-        endColumn = startColumn + 1
-    ) {
+        endColumn = startColumn + 1,
+        alias = undefined
+    }) {
         this.file = file
         this.startLine = startLine
         this.startColumn = startColumn
         this.endLine = endLine
         this.endColumn = endColumn
+        this.alias = alias
     }
 
     static dummy() {
-        return new TokenSite(DUMMY_FILE_NAME, 0, 0)
+        return new TokenSite({
+            file: DUMMY_FILE_NAME,
+            startLine: 0,
+            startColumn: 0
+        })
+    }
+
+    /**
+     * Converts something that implements the Site type to a TokenSite instance
+     * @param {Site} site
+     * @returns {TokenSite}
+     */
+    static fromSite(site) {
+        if (site instanceof TokenSite) {
+            return site
+        } else {
+            return new TokenSite({
+                file: site.file,
+                startLine: site.line,
+                startColumn: site.column,
+                endLine: site.end?.line,
+                endColumn: site.end?.column,
+                alias: site.alias
+            })
+        }
     }
 
     /**
@@ -70,7 +146,14 @@ export class TokenSite {
             endColumn = b.end?.column ?? b.column
         }
 
-        return new TokenSite(file, startLine, startColumn, endLine, endColumn)
+        // alias is lost
+        return new TokenSite({
+            file,
+            startLine,
+            startColumn,
+            endLine,
+            endColumn
+        })
     }
 
     /**
@@ -103,5 +186,20 @@ export class TokenSite {
      */
     toString() {
         return `${this.file}:${this.startLine + 1}:${this.startColumn + 1}`
+    }
+
+    /**
+     * @param {string} alias
+     * @returns {TokenSite}
+     */
+    withAlias(alias) {
+        return new TokenSite({
+            file: this.file,
+            startLine: this.startLine,
+            startColumn: this.startColumn,
+            endLine: this.endLine,
+            endColumn: this.endColumn,
+            alias
+        })
     }
 }

@@ -179,13 +179,13 @@ export class Tokenizer {
     rangeSite(start) {
         const end = this.currentSite
 
-        return new TokenSite(
-            start.file,
-            start.line,
-            start.column,
-            end.line,
-            end.column
-        )
+        return new TokenSite({
+            file: start.file,
+            startLine: start.line,
+            startColumn: start.column,
+            endLine: end.line,
+            endColumn: end.column
+        })
     }
 
     /**
@@ -860,13 +860,13 @@ export class Tokenizer {
             )
         }
 
-        const groupSite = new TokenSite(
-            open.site.file,
-            open.site.line,
-            open.site.column,
-            endSite ? endSite.line : open.site.line,
-            endSite ? endSite.column : open.site.column
-        )
+        const groupSite = new TokenSite({
+            file: open.site.file,
+            startLine: open.site.line,
+            startColumn: open.site.column,
+            endLine: endSite ? endSite.line : open.site.line,
+            endColumn: endSite ? endSite.column : open.site.column
+        })
 
         const group = new Group(open.value, fields, separators, groupSite)
         if (group.error) {

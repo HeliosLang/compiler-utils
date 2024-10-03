@@ -87,11 +87,11 @@ export class TokenReader {
                     lastSite.endLine &&
                     lastSite.endColumn
                 ) {
-                    lastSite = new TokenSite(
-                        lastSite.file,
-                        lastSite.endLine,
-                        lastSite.endColumn
-                    )
+                    lastSite = new TokenSite({
+                        file: lastSite.file,
+                        startLine: lastSite.endLine,
+                        startColumn: lastSite.endColumn
+                    })
                 }
 
                 this.errors.syntax(lastSite, "expected more tokens")

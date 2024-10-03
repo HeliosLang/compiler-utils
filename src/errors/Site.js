@@ -9,6 +9,7 @@
  * @typedef {Pos & {
  *   file: string
  *   end?: Pos
+ *   alias?: string
  *   toString: () => string
  * }} Site
  */

@@ -129,11 +129,11 @@ export class Group {
             w.writeToken(
                 new SymbolToken(
                     Group.otherSymbol(this.kind),
-                    new TokenSite(
-                        this.site.file,
-                        this.site.endLine,
-                        this.site.endColumn
-                    )
+                    new TokenSite({
+                        file: this.site.file,
+                        startLine: this.site.endLine,
+                        startColumn: this.site.endColumn
+                    })
                 )
             )
             return w.finalize()

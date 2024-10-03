@@ -54,7 +54,11 @@ export class SourceIndex {
         if (this.sourceMap) {
             return this.sourceMap.get(this.value) ?? TokenSite.dummy()
         } else {
-            return new TokenSite(this.source.name, this.line, this.column)
+            return new TokenSite({
+                file: this.source.name,
+                startLine: this.line,
+                startColumn: this.column
+            })
         }
     }
 
