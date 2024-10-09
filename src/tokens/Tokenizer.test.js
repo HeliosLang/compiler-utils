@@ -1,10 +1,10 @@
-import { describe, it } from "node:test"
-import { Tokenizer } from "./Tokenizer.js"
-import { Source } from "./Source.js"
 import { deepEqual, strictEqual, throws } from "node:assert"
-import { ByteArrayLiteral } from "./ByteArrayLiteral.js"
+import { describe, it } from "node:test"
 import { hexToBytes } from "@helios-lang/codec-utils"
+import { ByteArrayLiteral } from "./ByteArrayLiteral.js"
 import { IntLiteral } from "./IntLiteral.js"
+import { Source } from "./Source.js"
+import { Tokenizer } from "./Tokenizer.js"
 
 describe(Tokenizer.name, () => {
     it("tokenizes #54686543616B654973414C6965 as single ByteArrayLiteral", () => {

@@ -1,3 +1,5 @@
+export {}
+
 /**
  * @typedef {import("../errors/Site.js").Site} Site
  */

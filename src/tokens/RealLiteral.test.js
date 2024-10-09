@@ -1,6 +1,6 @@
+import { strictEqual } from "node:assert"
 import { describe, it } from "node:test"
 import { RealLiteral } from "./RealLiteral.js"
-import { strictEqual } from "node:assert"
 
 describe(RealLiteral.name, () => {
     it("formats 1.0 as 1.0", () => {

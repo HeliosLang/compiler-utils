@@ -1,13 +1,14 @@
+import { strictEqual, throws } from "node:assert"
 import { describe, it } from "node:test"
+import { Group } from "./Group.js"
+import { anyWord, group, symbol, wildcard, word } from "./TokenMatcher.js"
 import { TokenReader } from "./TokenReader.js"
 import { Word } from "./Word.js"
-import { anyWord, group, symbol, wildcard, word } from "./TokenMatcher.js"
-import { strictEqual, throws } from "node:assert"
-import { Group } from "./Group.js"
 
 /**
  * @typedef {import("./Token.js").Token} Token
  */
+
 describe(`${TokenReader.name}([con bool false])`, () => {
     const testTokens = [new Word("con"), new Word("bool"), new Word("false")]
 

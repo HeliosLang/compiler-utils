@@ -1,7 +1,7 @@
-import { describe, it } from "node:test"
 import { strictEqual } from "node:assert"
-import { translateImportPaths } from "./translateImportPaths.js"
+import { describe, it } from "node:test"
 import { removeTrailingWhitespace } from "./removeTrailingWhitespace.js"
+import { translateImportPaths } from "./translateImportPaths.js"
 
 describe(translateImportPaths.name, () => {
     /**

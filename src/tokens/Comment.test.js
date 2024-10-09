@@ -1,5 +1,5 @@
-import { describe, it } from "node:test"
 import { strictEqual } from "node:assert"
+import { describe, it } from "node:test"
 import { None } from "@helios-lang/type-utils"
 import { Comment } from "./Comment.js"
 

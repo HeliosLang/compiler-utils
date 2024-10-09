@@ -1,13 +1,13 @@
+import { bytesToHex, equalsBytes } from "@helios-lang/codec-utils"
 import { None } from "@helios-lang/type-utils"
-import { SymbolToken } from "./SymbolToken.js"
-import { Word } from "./Word.js"
+import { BoolLiteral } from "./BoolLiteral.js"
+import { ByteArrayLiteral } from "./ByteArrayLiteral.js"
 import { Group } from "./Group.js"
 import { IntLiteral } from "./IntLiteral.js"
-import { StringLiteral } from "./StringLiteral.js"
-import { ByteArrayLiteral } from "./ByteArrayLiteral.js"
-import { bytesToHex, equalsBytes } from "@helios-lang/codec-utils"
-import { BoolLiteral } from "./BoolLiteral.js"
 import { RealLiteral } from "./RealLiteral.js"
+import { StringLiteral } from "./StringLiteral.js"
+import { SymbolToken } from "./SymbolToken.js"
+import { Word } from "./Word.js"
 
 /**
  * @typedef {import("./Token.js").Token} Token

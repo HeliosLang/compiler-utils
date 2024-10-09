@@ -3,6 +3,7 @@ import { isSome } from "@helios-lang/type-utils"
 import { ErrorCollector } from "../errors/index.js"
 import { BoolLiteral } from "./BoolLiteral.js"
 import { ByteArrayLiteral } from "./ByteArrayLiteral.js"
+import { Comment } from "./Comment.js"
 import { Group } from "./Group.js"
 import { IntLiteral } from "./IntLiteral.js"
 import { REAL_PRECISION, RealLiteral } from "./RealLiteral.js"
@@ -12,7 +13,6 @@ import { StringLiteral } from "./StringLiteral.js"
 import { SymbolToken } from "./SymbolToken.js"
 import { TokenSite } from "./TokenSite.js"
 import { Word } from "./Word.js"
-import { Comment } from "./Comment.js"
 
 /**
  * @typedef {import("../errors/index.js").Site} Site

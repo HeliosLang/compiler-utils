@@ -1,11 +1,12 @@
+import { segmentArray } from "@helios-lang/codec-utils"
+import { None } from "@helios-lang/type-utils"
+
 /**
  * @typedef {{
  *   name?: string
  * }} SourceOptions
  */
 
-import { None } from "@helios-lang/type-utils"
-import { segmentArray } from "@helios-lang/codec-utils"
 /**
  * A Source instance wraps a string so we can use it cheaply as a reference inside a Site.
  * Also used by VSCode plugin
