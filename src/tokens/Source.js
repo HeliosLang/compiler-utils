@@ -8,8 +8,23 @@ import { None } from "@helios-lang/type-utils"
  */
 
 /**
+ * length is a separate field because of performance
+ * @typedef {{
+ *   content: string
+ *   name: string
+ *   length: number
+ *   lineEndLocations: number[]
+ *   getChar(i: number): string
+ *   getWord(i: number): string
+ *   getPosition(i: number): [number, number]
+ *   pretty(): string
+ * }} SourceI
+ */
+
+/**
  * A Source instance wraps a string so we can use it cheaply as a reference inside a Site.
  * Also used by VSCode plugin
+ * @implements {SourceI}
  */
 export class Source {
     /**
@@ -19,36 +34,38 @@ export class Source {
     content
 
     /**
-     * Number of characters in source content
-     * @type {number}
-     * @readonly
-     */
-    length
-
-    /**
-     * Number of characters in each chunk
-     * @type {number}
-     * @readonly
-     * */
-    chunkSize
-
-    /**
-     * Segemented zones of the source content for more efficient access
-     * @readonly
-     * @type {string[][]}
-     */
-    contentChunks
-
-    /**
      * @readonly
      * @type {string}
      */
     name
 
     /**
-     * cache of line lengths in input source.  See lineLengths getter.
-     * @type{Option<number[]>}
+     * Number of characters in source content
+     * @readonly
+     * @type {number}
+     */
+    length
+
+    /**
+     * Number of characters in each chunk
      * @private
+     * @readonly
+     * @type {number}
+     */
+    _chunkSize
+
+    /**
+     * Segemented zones of the source content for more efficient access
+     * @private
+     * @readonly
+     * @type {string[][]}
+     */
+    _contentChunks
+
+    /**
+     * cache of line lengths in input source.  See lineLengths getter.
+     * @private
+     * @type {Option<number[]>}
      */
     _lineEndLocations
 
@@ -61,11 +78,11 @@ export class Source {
         // one-step split to utf-8 runes in the content
         const asCodePoints = [...content]
         // heuristic for chunk size
-        this.chunkSize = Math.max(
+        this._chunkSize = Math.max(
             100,
             Math.floor(Math.sqrt(asCodePoints.length))
         )
-        this.contentChunks = segmentArray(asCodePoints, this.chunkSize)
+        this._contentChunks = segmentArray(asCodePoints, this._chunkSize)
         this.length = asCodePoints.length
         this.name = options.name ?? "unknown"
         this._lineEndLocations = None
@@ -81,12 +98,12 @@ export class Source {
         const targetChunk =
             i == this.length
                 ? []
-                : this.contentChunks[Math.floor(i / this.chunkSize)]
+                : this._contentChunks[Math.floor(i / this._chunkSize)]
 
         if (!targetChunk) {
             throw new Error(`invalid position in Source ${this.name}`)
         }
-        const offset = i % this.chunkSize
+        const offset = i % this._chunkSize
         return targetChunk[offset]
     }
 
@@ -129,9 +146,9 @@ export class Source {
         return chars.join("")
     }
 
-    /*
+    /**
      * Returns the location of each line-ending for fast line/column number lookup
-     * @returns {number[]}
+     * @type {number[]}
      */
     get lineEndLocations() {
         if (this._lineEndLocations) return this._lineEndLocations

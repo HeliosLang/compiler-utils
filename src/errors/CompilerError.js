@@ -2,10 +2,28 @@
  * @typedef {import("./Site.js").Site} Site
  */
 
+const COMPILER_ERROR_KINDS = /** @type {const} */ ([
+    "ReferenceError",
+    "SyntaxError",
+    "TypeError"
+])
+
 /**
- * @typedef {"ReferenceError" | "SyntaxError" | "TypeError"} CompilerErrorKind
+ * @typedef {typeof COMPILER_ERROR_KINDS extends ReadonlyArray<infer T> ? T : never} CompilerErrorKind
  */
 
+/**
+ * @typedef {Error & {
+ *   kind: CompilerErrorKind
+ *   site: Site
+ *   originalMessage: string
+ *   otherErrors: CompilerErrorI[] | null
+ * }} CompilerErrorI
+ */
+
+/**
+ * @implements {CompilerErrorI}
+ */
 export class CompilerError extends Error {
     /**
      * @readonly
@@ -26,7 +44,7 @@ export class CompilerError extends Error {
     originalMessage
 
     /**
-     * @type {CompilerError[] | null}
+     * @type {CompilerErrorI[] | null}
      */
     otherErrors
 
@@ -56,11 +74,15 @@ export class CompilerError extends Error {
 
             return res
         } catch (e) {
-            if (e instanceof CompilerError) {
-                return onError()
-            } else {
-                throw e
+            if (e instanceof Error) {
+                const err = /** @type {Error | CompilerErrorI} */ (e)
+
+                if ("kind" in err && COMPILER_ERROR_KINDS.includes(err.kind)) {
+                    return onError()
+                }
             }
+
+            throw e
         }
     }
 

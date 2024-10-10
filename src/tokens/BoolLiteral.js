@@ -2,12 +2,13 @@ import { TokenSite } from "./TokenSite.js"
 
 /**
  * @typedef {import("../errors/index.js").Site} Site
+ * @typedef {import("./Token.js").BoolLiteralI} BoolLiteralI
  * @typedef {import("./Token.js").Token} Token
  */
 
 /**
  * Bool literal token
- * @implements {Token}
+ * @implements {BoolLiteralI}
  */
 export class BoolLiteral {
     /**
@@ -41,11 +42,18 @@ export class BoolLiteral {
     }
 
     /**
+     * @type {"bool"}
+     */
+    get kind() {
+        return "bool"
+    }
+
+    /**
      * @param {Token} other
      * @returns {boolean}
      */
     isEqual(other) {
-        return other instanceof BoolLiteral && other.value == this.value
+        return other.kind == "bool" && other.value == this.value
     }
 
     /**

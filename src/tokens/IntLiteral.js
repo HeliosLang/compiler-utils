@@ -2,12 +2,13 @@ import { TokenSite } from "./TokenSite.js"
 
 /**
  * @typedef {import("../errors/index.js").Site} Site
+ * @typedef {import("./Token.js").IntLiteralI} IntLiteralI
  * @typedef {import("./Token.js").Token} Token
  */
 
 /**
  * Signed int literal token
- * @implements {Token}
+ * @implements {IntLiteralI}
  */
 export class IntLiteral {
     /**
@@ -32,11 +33,18 @@ export class IntLiteral {
     }
 
     /**
+     * @type {"int"}
+     */
+    get kind() {
+        return "int"
+    }
+
+    /**
      * @param {Token} other
      * @returns {boolean}
      */
     isEqual(other) {
-        return other instanceof IntLiteral && other.value == this.value
+        return other.kind == "int" && other.value == this.value
     }
 
     /**

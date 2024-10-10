@@ -7,6 +7,7 @@ import { Word } from "./Word.js"
 
 /**
  * @typedef {import("./Token.js").Token} Token
+ * @typedef {import("./TokenReader.js").TokenReaderI} TokenReaderI
  */
 
 describe(`${TokenReader.name}([con bool false])`, () => {
@@ -55,6 +56,9 @@ describe(`${TokenReader.name}([con bool false])`, () => {
     })
 
     it("matches [(con bool false)] using [group] [word, word, word]", () => {
+        /**
+         * @type {TokenReaderI}
+         */
         let r = new TokenReader([new Group("(", [testTokens], [])])
         let m
 
@@ -80,9 +84,9 @@ describe(`${TokenReader.name}([con bool false])`, () => {
 
         if ((m = r.findNext(word("bool")))) {
             /**
-             * @satisfies {[TokenReader, Word]}
+             * @satisfies {[TokenReaderI, Word]}
              */
-            const [ra, w] = m
+            const [ra, _w] = m
 
             strictEqual(
                 !!ra.matches(word("con")) && !!r.matches(word("false")),
@@ -104,7 +108,7 @@ describe(`${TokenReader.name}([con bool false])`, () => {
             /**
              * @satisfies {[TokenReader, Word]}
              */
-            const [ra, w] = m
+            const [ra, _w] = m
 
             strictEqual(
                 !!ra.matches(word("con"), word("bool")) &&
@@ -124,9 +128,9 @@ describe(`${TokenReader.name}([con bool false])`, () => {
 
         if ((m = r.findLastMatch(word("con"), word("bool")))) {
             /**
-             * @satisfies {[TokenReader, Word, Word]}
+             * @satisfies {[TokenReaderI, Word, Word]}
              */
-            const [ra, c, b] = m
+            const [ra, _c, _b] = m
 
             strictEqual(ra.isEof() && !!r.matches(word("false")), true)
         }

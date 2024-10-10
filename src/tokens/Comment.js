@@ -2,13 +2,26 @@ import { None } from "@helios-lang/type-utils"
 
 /**
  * @typedef {import("../errors/index.js").Site} Site
+ * @typedef {import("./Token.js").CommentI} CommentI
  * @typedef {import("./Token.js").Token} Token
  */
 
 /**
- * @implements {Token}
+ * @implements {CommentI}
  */
 export class Comment {
+    /**
+     * @readonly
+     * @type {string}
+     */
+    value
+
+    /**
+     * @readonly
+     * @type {Site}
+     */
+    site
+
     /**
      * @param {string} value - includes the comment symbols
      * @param {Site} site
@@ -27,11 +40,18 @@ export class Comment {
     }
 
     /**
+     * @type {"comment"}
+     */
+    get kind() {
+        return "comment"
+    }
+
+    /**
      * @param {Token} other
      * @returns {boolean}
      */
     isEqual(other) {
-        return other instanceof Comment && other.value == this.value
+        return other.kind == "comment" && other.value == this.value
     }
 
     /**

@@ -1,16 +1,22 @@
 import { bytesToHex, equalsBytes } from "@helios-lang/codec-utils"
 import { None } from "@helios-lang/type-utils"
-import { BoolLiteral } from "./BoolLiteral.js"
-import { ByteArrayLiteral } from "./ByteArrayLiteral.js"
 import { Group } from "./Group.js"
-import { IntLiteral } from "./IntLiteral.js"
-import { RealLiteral } from "./RealLiteral.js"
-import { StringLiteral } from "./StringLiteral.js"
 import { SymbolToken } from "./SymbolToken.js"
-import { Word } from "./Word.js"
 
 /**
+ * @template {string} [T=string]
+ * @typedef {import("./Token.js").SymbolTokenI<T>} SymbolTokenI
+ */
+
+/**
+ * @typedef {import("./Token.js").BoolLiteralI} BoolLiteralI
+ * @typedef {import("./Token.js").ByteArrayLiteralI} ByteArrayLiteralI
+ * @typedef {import("./Token.js").IntLiteralI} IntLiteralI
+ * @typedef {import("./Token.js").RealLiteralI} RealLiteralI
+ * @typedef {import("./Token.js").StringLiteralI} StringLiteralI
  * @typedef {import("./Token.js").Token} Token
+ * @typedef {import("./Token.js").TokenGroupI} TokenGroupI
+ * @typedef {import("./Token.js").WordI} WordI
  */
 
 /**
@@ -24,44 +30,41 @@ import { Word } from "./Word.js"
  */
 
 /**
- * @type {TokenMatcher<SymbolToken>}
+ * @type {TokenMatcher<SymbolTokenI>}
  */
 export const anySymbol = {
-    matches: (t) => (t instanceof SymbolToken ? t : None),
+    matches: (t) => (t.kind == "symbol" ? t : None),
     toString: () => "<symbol>"
 }
 
 /**
- * @type {TokenMatcher<Word>}
+ * @type {TokenMatcher<WordI>}
  */
 export const anyWord = {
-    matches: (t) => (t instanceof Word ? t : None),
+    matches: (t) => (t.kind == "word" ? t : None),
     toString: () => "<word>"
 }
 
 /**
  * @param {Option<boolean>} value
- * @returns {TokenMatcher<BoolLiteral>}
+ * @returns {TokenMatcher<BoolLiteralI>}
  */
 export function boollit(value = None) {
     return {
         matches: (t) =>
-            t instanceof BoolLiteral && (value ? t.value === value : true)
-                ? t
-                : None,
+            t.kind == "bool" && (value ? t.value === value : true) ? t : None,
         toString: () => (value ? (value ? "true" : "false") : "true | false")
     }
 }
 
 /**
  * @param {Option<number[] | Uint8Array>} value
- * @returns {TokenMatcher<ByteArrayLiteral>}
+ * @returns {TokenMatcher<ByteArrayLiteralI>}
  */
 export function byteslit(value = None) {
     return {
         matches: (t) =>
-            t instanceof ByteArrayLiteral &&
-            (value ? equalsBytes(t.value, value) : true)
+            t.kind == "bytes" && (value ? equalsBytes(t.value, value) : true)
                 ? t
                 : None,
         toString: () =>
@@ -72,11 +75,11 @@ export function byteslit(value = None) {
 /**
  * @param {string} kind
  * @param {Option<{length: number} | {minLength: number} | {maxLength: number} | {minLength: number, maxLength: number }>} options
- * @returns {TokenMatcher<Group>}
+ * @returns {TokenMatcher<TokenGroupI>}
  */
 export function group(kind, options = None) {
     /**
-     * @param {Group} g
+     * @param {TokenGroupI} g
      * @returns {boolean}
      */
     function matchLength(g) {
@@ -102,7 +105,11 @@ export function group(kind, options = None) {
 
     return {
         matches: (t) =>
-            t instanceof Group && t.isKind(kind) && matchLength(t) ? t : None,
+            (t.kind == "(" || t.kind == "[" || t.kind == "{") &&
+            t.isKind(kind) &&
+            matchLength(t)
+                ? t
+                : None,
         toString: () =>
             `${kind}${options && "length" in options ? `<${options.length} entries>` : "..."}${Group.otherSymbol(kind)}`
     }
@@ -110,12 +117,12 @@ export function group(kind, options = None) {
 
 /**
  * @param {Option<string | number | bigint>} value
- * @returns {TokenMatcher<IntLiteral>}
+ * @returns {TokenMatcher<IntLiteralI>}
  */
 export function intlit(value = None) {
     return {
         matches: (t) =>
-            t instanceof IntLiteral && (value ? t.value == BigInt(value) : true)
+            t.kind == "int" && (value ? t.value == BigInt(value) : true)
                 ? t
                 : None,
         toString: () => (value ? `${value.toString()}` : "<int>")
@@ -145,30 +152,28 @@ export function oneOf(matchers) {
 }
 
 /**
- * @type {TokenMatcher<RealLiteral>}
+ * @type {TokenMatcher<RealLiteralI>}
  */
 export const reallit = {
-    matches: (t) => (t instanceof RealLiteral ? t : None),
+    matches: (t) => (t.kind == "real" ? t : None),
     toString: () => "<real>"
 }
 
 /**
  * @param {Option<string>} value
- * @returns {TokenMatcher<StringLiteral>}
+ * @returns {TokenMatcher<StringLiteralI>}
  */
 export function strlit(value = None) {
     return {
         matches: (t) =>
-            t instanceof StringLiteral && (value ? t.value == value : true)
-                ? t
-                : None,
+            t.kind == "string" && (value ? t.value == value : true) ? t : None,
         toString: () => (value ? `"${value.toString()}"` : "<string>")
     }
 }
 
 /**
  * @param {string} v
- * @returns {TokenMatcher<SymbolToken>}
+ * @returns {TokenMatcher<SymbolTokenI>}
  */
 export function symbol(v) {
     const s = new SymbolToken(v)
@@ -190,12 +195,12 @@ export const wildcard = {
 /**
  * @param {string} s
  * @param {Option<{caseInsensitive: boolean}>} options
- * @returns {TokenMatcher<Word>}
+ * @returns {TokenMatcher<WordI>}
  */
 export function word(s, options = None) {
     return {
         matches: (t) =>
-            t instanceof Word &&
+            t.kind == "word" &&
             (options?.caseInsensitive
                 ? t.value.toLowerCase() == s.toLowerCase()
                 : t.value == s)

@@ -29,6 +29,7 @@ export { Word } from "./Word.js"
 /**
  * @typedef {import("./SourceMap.js").SourceMap} SourceMap
  * @typedef {import("./Token.js").Token} Token
+ * @typedef {import("./TokenReader.js").TokenReaderI} TokenReaderI
  */
 
 /**

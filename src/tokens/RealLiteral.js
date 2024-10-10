@@ -2,6 +2,7 @@ import { TokenSite } from "./TokenSite.js"
 
 /**
  * @typedef {import("../errors/index.js").Site} Site
+ * @typedef {import("./Token.js").RealLiteralI} RealLiteralI
  * @typedef {import("./Token.js").Token} Token
  */
 
@@ -11,7 +12,7 @@ const REAL_FACTOR = 10n ** BigInt(REAL_PRECISION)
 
 /**
  * Fixed point number literal token
- * @implements {Token}
+ * @implements {RealLiteralI}
  */
 export class RealLiteral {
     /**
@@ -46,11 +47,18 @@ export class RealLiteral {
     }
 
     /**
+     * @type {"real"}
+     */
+    get kind() {
+        return "real"
+    }
+
+    /**
      * @param {Token} other
      * @returns {boolean}
      */
     isEqual(other) {
-        return other instanceof RealLiteral && other.value == this.value
+        return other.kind == "real" && other.value == this.value
     }
 
     /**

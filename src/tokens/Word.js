@@ -1,14 +1,15 @@
-import { None } from "@helios-lang/type-utils"
+import { isSome, None } from "@helios-lang/type-utils"
 import { TokenSite } from "./TokenSite.js"
 
 /**
  * @typedef {import("../errors/index.js").Site} Site
  * @typedef {import("./Token.js").Token} Token
+ * @typedef {import("./Token.js").WordI} WordI
  */
 
 /**
  * A Word token represents a token that matches /[A-Za-z_][A-Za-z_0-9]/
- * @implements {Token}
+ * @implements {WordI}
  */
 export class Word {
     /**
@@ -37,7 +38,20 @@ export class Word {
      * @returns {Option<Word>}
      */
     static from(token) {
-        return token instanceof Word ? token : None
+        if (token instanceof Word) {
+            return token
+        } else if (isSome(token) && token.kind == "word") {
+            return new Word(token.value, token.site)
+        } else {
+            return None
+        }
+    }
+
+    /**
+     * @type {"word"}
+     */
+    get kind() {
+        return "word"
     }
 
     /**
@@ -45,7 +59,7 @@ export class Word {
      * @returns {boolean}
      */
     isEqual(other) {
-        return other instanceof Word && other.value == this.value
+        return other.kind == "word" && other.value == this.value
     }
 
     /**

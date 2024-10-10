@@ -7,7 +7,6 @@ import { Comment } from "./Comment.js"
 import { Group } from "./Group.js"
 import { IntLiteral } from "./IntLiteral.js"
 import { REAL_PRECISION, RealLiteral } from "./RealLiteral.js"
-import { Source } from "./Source.js"
 import { SourceIndex } from "./SourceIndex.js"
 import { StringLiteral } from "./StringLiteral.js"
 import { SymbolToken } from "./SymbolToken.js"
@@ -15,8 +14,16 @@ import { TokenSite } from "./TokenSite.js"
 import { Word } from "./Word.js"
 
 /**
+ * @template {string} [T=string]
+ * @typedef {import("./Token.js").SymbolTokenI<T>} SymbolTokenI
+ */
+
+/**
+ * @typedef {import("../errors/index.js").ErrorCollectorI} ErrorCollectorI
  * @typedef {import("../errors/index.js").Site} Site
+ * @typedef {import("./Source.js").SourceI} SourceI
  * @typedef {import("./SourceMap.js").SourceMap} SourceMap
+ * @typedef {import("./Token.js").GroupKind} GroupKind
  * @typedef {import("./Token.js").Token} Token
  */
 
@@ -28,7 +35,7 @@ import { Word } from "./Word.js"
  *   tokenizeReal?: boolean
  *   preserveComments?: boolean
  *   allowLeadingZeroes?: boolean
- *   errorCollector?: ErrorCollector
+ *   errorCollector?: ErrorCollectorI
  * }} TokenizerOptions
  */
 
@@ -36,13 +43,6 @@ const DEFAULT_VALID_FIRST_LETTERS =
     "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 export class Tokenizer {
-    /**
-     * @private
-     * @readonly
-     * @type {Set<string>}
-     */
-    validFirstLetters
-
     /**
      * @readonly
      * @type {number}
@@ -68,45 +68,52 @@ export class Tokenizer {
     allowLeadingZeroes
 
     /**
+     * Basic syntax errors are accumulated here
+     * @readonly
+     * @type {ErrorCollectorI}
+     */
+    errors
+
+    /**
+     * @private
+     * @readonly
+     * @type {Set<string>}
+     */
+    _validFirstLetters
+
+    /**
      * Current character index
      * @private
      * @type {SourceIndex}
      */
-    sourceIndex
+    _sourceIndex
 
     /**
      * Tokens are accumulated in this list
      * @private
      * @type {Token[]}
      */
-    tokens
+    _tokens
 
     /**
-     * Basic syntax errors are accumulated here
-     * @readonly
-     * @type {ErrorCollector}
-     */
-    errors
-
-    /**
-     * @param {Source} source
+     * @param {SourceI} source
      * @param {TokenizerOptions} options
      */
     constructor(source, options = {}) {
-        this.validFirstLetters = new Set(
+        this.realPrecision = options?.realPrecision ?? REAL_PRECISION
+        this.tokenizeReal = options?.tokenizeReal ?? true
+        this.preserveComments = options?.preserveComments ?? false
+        this.allowLeadingZeroes = options?.allowLeadingZeroes ?? false
+        this.errors = options.errorCollector ?? new ErrorCollector()
+
+        this._validFirstLetters = new Set(
             (
                 DEFAULT_VALID_FIRST_LETTERS +
                 (options?.extraValidFirstLetters ?? "")
             ).split("")
         )
-        this.realPrecision = options?.realPrecision ?? REAL_PRECISION
-        this.tokenizeReal = options?.tokenizeReal ?? true
-        this.preserveComments = options?.preserveComments ?? false
-        this.allowLeadingZeroes = options?.allowLeadingZeroes ?? false
-
-        this.sourceIndex = new SourceIndex(source, options.sourceMap)
-        this.tokens = [] // reset to empty to list at start of tokenize()
-        this.errors = options.errorCollector ?? new ErrorCollector()
+        this._sourceIndex = new SourceIndex(source, options.sourceMap)
+        this._tokens = [] // reset to empty to list at start of tokenize()
     }
 
     /**
@@ -115,7 +122,7 @@ export class Tokenizer {
      * @returns {Token[]}
      */
     tokenize(nestGroups = true) {
-        this.tokens = []
+        this._tokens = []
 
         let site = this.currentSite
         let c = this.readChar()
@@ -128,9 +135,9 @@ export class Tokenizer {
         }
 
         if (nestGroups) {
-            return this.nestGroups(this.tokens)
+            return this.nestGroups(this._tokens)
         } else {
-            return this.tokens
+            return this._tokens
         }
     }
 
@@ -142,7 +149,7 @@ export class Tokenizer {
      * @returns {Generator<Token>}
      */
     *stream() {
-        this.tokens = []
+        this._tokens = []
 
         let site = this.currentSite
         let c = this.readChar()
@@ -150,17 +157,17 @@ export class Tokenizer {
         while (c != "\0") {
             this.readToken(site, c)
 
-            let t = this.tokens.shift()
+            let t = this._tokens.shift()
             while (t != undefined) {
                 yield t
-                t = this.tokens.shift()
+                t = this._tokens.shift()
             }
 
             site = this.currentSite
             c = this.readChar()
         }
 
-        if (this.tokens.length != 0) {
+        if (this._tokens.length != 0) {
             throw new Error("unexpected")
         }
     }
@@ -169,7 +176,7 @@ export class Tokenizer {
      * @type {Site}
      */
     get currentSite() {
-        return this.sourceIndex.site
+        return this._sourceIndex.site
     }
 
     /**
@@ -205,7 +212,7 @@ export class Tokenizer {
      * @param {Token} t
      */
     pushToken(t) {
-        this.tokens.push(t)
+        this._tokens.push(t)
 
         /*if (this.#codeMap !== null && this.#codeMapPos < this.#codeMap.length) {
 			let pair = (this.#codeMap[this.#codeMapPos]);
@@ -222,21 +229,21 @@ export class Tokenizer {
      * @returns {string}
      */
     readChar() {
-        return this.sourceIndex.readChar()
+        return this._sourceIndex.readChar()
     }
 
     /**
      * @returns {string}
      */
     peekChar() {
-        return this.sourceIndex.peekChar()
+        return this._sourceIndex.peekChar()
     }
 
     /**
      * Decreases source index pos by one
      */
     unreadChar() {
-        this.sourceIndex.unreadChar()
+        this._sourceIndex.unreadChar()
     }
 
     /**
@@ -247,7 +254,7 @@ export class Tokenizer {
     readToken(site, c) {
         if (c == "b") {
             this.readMaybeUtf8ByteArray(site)
-        } else if (this.validFirstLetters.has(c)) {
+        } else if (this._validFirstLetters.has(c)) {
             this.readWord(site, c)
         } else if (c == "/") {
             this.readMaybeComment(site)
@@ -290,7 +297,7 @@ export class Tokenizer {
 
         let c = c0
         while (c != "\0") {
-            if ((c >= "0" && c <= "9") || this.validFirstLetters.has(c)) {
+            if ((c >= "0" && c <= "9") || this._validFirstLetters.has(c)) {
                 chars.push(c)
                 c = this.readChar()
             } else {
@@ -790,7 +797,7 @@ export class Tokenizer {
 
     /**
      * Separates tokens in fields (separted by commas)
-     * @param {SymbolToken} open
+     * @param {SymbolTokenI<GroupKind>} open
      * @param {Token[]} ts
      * @returns {Group}
      */
@@ -820,15 +827,19 @@ export class Tokenizer {
         while (prev && t) {
             endSite = t.site
 
-            if (!SymbolToken.isSymbol(t, Group.otherSymbol(prev))) {
+            if (!(t.kind == "symbol" && t.value == Group.otherSymbol(prev))) {
                 stack.push(prev)
 
-                if (Group.isCloseSymbol(t)) {
+                if (t.kind == "symbol" && Group.isCloseSymbol(t)) {
                     this.addSyntaxError(t.site, `unmatched '${t.value}'`)
-                } else if (Group.isOpenSymbol(t)) {
+                } else if (t.kind == "symbol" && Group.isOpenSymbol(t)) {
                     stack.push(t)
                     curField.push(t)
-                } else if (SymbolToken.isSymbol(t, ",") && stack.length == 1) {
+                } else if (
+                    t.kind == "symbol" &&
+                    t.value == "," &&
+                    stack.length == 1
+                ) {
                     separators.push(t)
 
                     if (curField.length == 0) {
@@ -908,12 +919,12 @@ export class Tokenizer {
         let current = []
 
         for (let t of ts) {
-            if (Group.isOpenSymbol(t)) {
+            if (t.kind == "symbol" && Group.isOpenSymbol(t)) {
                 stack.push(current)
 
                 current = [t]
-            } else if (Group.isCloseSymbol(t)) {
-                let open = SymbolToken.asSymbol(current.shift())
+            } else if (t.kind == "symbol" && Group.isCloseSymbol(t)) {
+                let open = SymbolToken.from(current.shift())
 
                 if (!open || !t.matches(Group.otherSymbol(open))) {
                     if (open) {
@@ -933,6 +944,10 @@ export class Tokenizer {
                     this.addSyntaxError(t.site, `unmatched '${t.value}'`)
                 }
 
+                if (!Group.isOpenSymbol(open)) {
+                    throw new Error("unexpected")
+                }
+
                 const group = this.buildGroup(open, current.concat([t]))
                 if (group.error) {
                     this.addSyntaxError(group.site, group.error)
@@ -948,11 +963,11 @@ export class Tokenizer {
         if (stack.length > 0) {
             const t = stack[stack.length - 1][0]
 
-            if (!SymbolToken.isSymbol(t)) {
+            if (t.kind != "symbol") {
                 if (current.length > 0) {
                     const open = current[0]
 
-                    if (SymbolToken.isSymbol(open)) {
+                    if (open.kind == "symbol") {
                         this.addSyntaxError(
                             open.site,
                             `unmatched '${open.value}`

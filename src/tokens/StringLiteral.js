@@ -1,14 +1,15 @@
-import { None } from "@helios-lang/type-utils"
+import { isSome, None } from "@helios-lang/type-utils"
 import { TokenSite } from "./TokenSite.js"
 
 /**
  * @typedef {import("../errors/index.js").Site} Site
+ * @typedef {import("./Token.js").StringLiteralI} StringLiteralI
  * @typedef {import("./Token.js").Token} Token
  */
 
 /**
  * String literal token (utf8)
- * @implements {Token}
+ * @implements {StringLiteralI}
  */
 export class StringLiteral {
     /**
@@ -16,6 +17,12 @@ export class StringLiteral {
      * @type {string}
      */
     value
+
+    /**
+     * @readonly
+     * @type {Site}
+     */
+    site
 
     /**
      * @param {string} value
@@ -27,12 +34,24 @@ export class StringLiteral {
     }
 
     /**
-     *
-     * @param {any} token
+     * @param {Option<Token>} token
      * @returns {Option<StringLiteral>}
      */
     static from(token) {
-        return token instanceof StringLiteral ? token : None
+        if (token instanceof StringLiteral) {
+            return token
+        } else if (isSome(token) && token.kind == "string") {
+            return new StringLiteral(token.value, token.site)
+        } else {
+            return None
+        }
+    }
+
+    /**
+     * @type {"string"}
+     */
+    get kind() {
+        return "string"
     }
 
     /**
@@ -40,7 +59,7 @@ export class StringLiteral {
      * @returns {boolean}
      */
     isEqual(other) {
-        return other instanceof StringLiteral && other.value == this.value
+        return other.kind == "string" && other.value == this.value
     }
 
     /**

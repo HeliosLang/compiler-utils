@@ -3,12 +3,13 @@ import { TokenSite } from "./TokenSite.js"
 
 /**
  * @typedef {import("../errors/index.js").Site} Site
+ * @typedef {import("./Token.js").ByteArrayLiteralI} ByteArrayLiteralI
  * @typedef {import("./Token.js").Token} Token
  */
 
 /**
  * ByteArray literal token
- * @implements {Token}
+ * @implements {ByteArrayLiteralI}
  */
 export class ByteArrayLiteral {
     /**
@@ -33,14 +34,18 @@ export class ByteArrayLiteral {
     }
 
     /**
+     * @type {"bytes"}
+     */
+    get kind() {
+        return "bytes"
+    }
+
+    /**
      * @param {Token} other
      * @returns {boolean}
      */
     isEqual(other) {
-        return (
-            other instanceof ByteArrayLiteral &&
-            equalsBytes(this.value, other.value)
-        )
+        return other.kind == "bytes" && equalsBytes(this.value, other.value)
     }
 
     /**

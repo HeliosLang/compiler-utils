@@ -1,15 +1,15 @@
-import { Source } from "./Source.js"
 import { TokenSite } from "./TokenSite.js"
 
 /**
  * @typedef {import("../errors/Site.js").Site} Site
+ * @typedef {import("./Source.js").SourceI} SourceI
  * @typedef {import("./SourceMap.js").SourceMap} SourceMap
  */
 
 export class SourceIndex {
     /**
      * @readonly
-     * @type {Source}
+     * @type {SourceI}
      */
     source
 
@@ -35,7 +35,7 @@ export class SourceIndex {
     line
 
     /**
-     * @param {Source} source
+     * @param {SourceI} source
      * @param {Option<SourceMap>} sourceMap
      */
     constructor(source, sourceMap) {

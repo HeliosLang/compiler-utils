@@ -18,6 +18,7 @@ const DUMMY_FILE_NAME = "::internal"
  *   alias?: string
  * }} TokenSiteProps
  */
+
 /**
  * @implements {Site}
  */

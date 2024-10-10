@@ -5,17 +5,19 @@ import { TokenSite } from "./TokenSite.js"
 import { Word } from "./Word.js"
 
 /**
- * @typedef {import("./Token.js").Token} Token
- */
-
-/**
  * @template {Token} [T=Token]
  * @typedef {import("./TokenMatcher.js").TokenMatcher<T>} TokenMatcher
  */
 
 /**
+ * @typedef {import("../errors/index.js").ErrorCollectorI} ErrorCollectorI
+ * @typedef {import("./Token.js").Token} Token
+ * @typedef {import("./Token.js").WordI} WordI
+ */
+
+/**
  * @template {Token} T
- * @typedef {T extends Group ? Group<TokenReader> : T} AugmentGroup
+ * @typedef {T extends Group ? Group<TokenReaderI> : T} AugmentGroup
  */
 
 /**
@@ -24,10 +26,38 @@ import { Word } from "./Word.js"
  */
 
 /**
- * @template {(Group<TokenReader> | Token)[]} Tokens
+ * @template {(Group<TokenReaderI> | Token)[]} Tokens
  * @typedef {Tokens extends [infer T] ? T : Tokens} UnwrapSingleton
  */
 
+/**
+ * @typedef {{
+ *   tokens: Token[]
+ *   errors: ErrorCollectorI
+ *   rest: Token[]
+ *   assert: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => TokenReaderI
+ *   end(): void
+ *   findNext: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<[TokenReaderI, ...MatcherTokens<Matchers>]>
+ *   findNextMatch: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<[TokenReaderI, ...MatcherTokens<Matchers>]>
+ *   findLast: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<[TokenReaderI, ...MatcherTokens<Matchers>]>
+ *   findLastMatch: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<[TokenReaderI, ...MatcherTokens<Matchers>]>
+ *   readUntil: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => TokenReaderI
+ *   isEof(): boolean
+ *   matches: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<UnwrapSingleton<MatcherTokens<Matchers>>>
+ *   endMatch(throwFail?: boolean | string): TokenReaderI
+ *   readField(kind: string): Option<TokenReaderI>
+ *   readFields: <T>(kind: string, callback: (tr: TokenReaderI) => T, options: ({length?: number} | {minLength?: number, maxLength?: number})) => T[]
+ *   readGroup(kind: string): Option<Group>
+ *   readNonKeyword(): Option<WordI>
+ *   readToken(): Option<Token>
+ *   readWord(value?: Option<string>): Option<WordI>
+ *   unreadToken(): void
+ * }} TokenReaderI
+ */
+
+/**
+ * @implements {TokenReaderI}
+ */
 export class TokenReader {
     /**
      * @readonly
@@ -37,7 +67,7 @@ export class TokenReader {
 
     /**
      * @readonly
-     * @type {ErrorCollector}
+     * @type {ErrorCollectorI}
      */
     errors
 
@@ -45,29 +75,30 @@ export class TokenReader {
      * @private
      * @type {number}
      */
-    i
+    _i
 
     /**
+     * @private
      * @type {TokenMatcher<Token>[][]}
      */
-    failedMatches
+    _failedMatches
 
     /**
      * @param {Token[]} tokens
-     * @param {ErrorCollector} errors
+     * @param {ErrorCollectorI} errors
      */
     constructor(tokens, errors = new ErrorCollector()) {
         this.tokens = tokens
         this.errors = errors
-        this.i = 0
-        this.failedMatches = []
+        this._i = 0
+        this._failedMatches = []
     }
 
     /**
      * @type {Token[]}
      */
     get rest() {
-        return this.tokens.slice(this.i)
+        return this.tokens.slice(this._i)
     }
 
     /**
@@ -77,7 +108,7 @@ export class TokenReader {
      */
     assert(...matchers) {
         matchers.forEach((m, j) => {
-            const i = this.i + j
+            const i = this._i + j
 
             if (i == this.tokens.length) {
                 let lastSite = this.tokens[this.tokens.length - 1].site
@@ -105,17 +136,17 @@ export class TokenReader {
             }
         })
 
-        this.i = this.i + matchers.length
+        this._i = this._i + matchers.length
 
         return this
     }
 
     end() {
-        if (this.i < this.tokens.length) {
+        if (this._i < this.tokens.length) {
             // TODO: should we merge the contexts of all the remaining tokens
-            this.errors.syntax(this.tokens[this.i].site, "unexpected tokens")
+            this.errors.syntax(this.tokens[this._i].site, "unexpected tokens")
 
-            this.i = this.tokens.length
+            this._i = this.tokens.length
         }
     }
 
@@ -127,7 +158,7 @@ export class TokenReader {
      * @returns {Option<[TokenReader, ...MatcherTokens<Matchers>]>}
      */
     findNext(...matchers) {
-        const i0 = this.i
+        const i0 = this._i
 
         const res = /** @type {any} */ (this.findNextInternal(...matchers))
 
@@ -152,7 +183,7 @@ export class TokenReader {
         const res = /** @type {any} */ (this.findNextInternal(...matchers))
 
         if (isNone(res)) {
-            // TODO: add entry to `this.failedMatches`
+            // TODO: add entry to `this._failedMatches`
         }
 
         return res
@@ -167,7 +198,7 @@ export class TokenReader {
     findNextInternal(...matchers) {
         const n = matchers.length
 
-        const i0 = this.i
+        const i0 = this._i
         for (let i = i0; i < this.tokens.length; i++) {
             if (this.tokens.length - i >= n) {
                 const res = matchers.every((m, j) =>
@@ -183,8 +214,8 @@ export class TokenReader {
                             )
                     )
 
-                    this.i = i + n
-                    this.failedMatches = []
+                    this._i = i + n
+                    this._failedMatches = []
 
                     return /** @type {any} */ ([
                         new TokenReader(this.tokens.slice(i0, i), this.errors),
@@ -205,7 +236,7 @@ export class TokenReader {
      * @returns {Option<[TokenReader, ...MatcherTokens<Matchers>]>}
      */
     findLast(...matchers) {
-        const i0 = this.i
+        const i0 = this._i
 
         const res = /** @type {any} */ (this.findLastInternal(...matchers))
 
@@ -230,7 +261,7 @@ export class TokenReader {
         const res = /** @type {any} */ (this.findLastInternal(...matchers))
 
         if (isNone(res)) {
-            // TODO: add entry to `this.failedMatches`
+            // TODO: add entry to `this._failedMatches`
         }
 
         return res
@@ -245,7 +276,7 @@ export class TokenReader {
     findLastInternal(...matchers) {
         const n = matchers.length
 
-        const i0 = this.i
+        const i0 = this._i
         for (let i = this.tokens.length - 1; i >= i0; i--) {
             if (this.tokens.length - i >= n) {
                 const res = matchers.every((m, j) =>
@@ -261,8 +292,8 @@ export class TokenReader {
                             )
                     )
 
-                    this.i = i + n
-                    this.failedMatches = []
+                    this._i = i + n
+                    this._failedMatches = []
 
                     return /** @type {any} */ ([
                         new TokenReader(this.tokens.slice(i0, i), this.errors),
@@ -291,14 +322,14 @@ export class TokenReader {
         if ((m = this.findNextInternal(...matchers))) {
             let [reader] = m
 
-            this.i -= n
+            this._i -= n
 
             return reader
         } else {
             let reader = new TokenReader(this.tokens, this.errors)
 
-            reader.i = this.i
-            this.i = this.tokens.length
+            reader._i = this._i
+            this._i = this.tokens.length
 
             return reader
         }
@@ -308,7 +339,7 @@ export class TokenReader {
      * @returns {boolean}
      */
     isEof() {
-        return this.i >= this.tokens.length
+        return this._i >= this.tokens.length
     }
 
     /**
@@ -319,21 +350,21 @@ export class TokenReader {
     matches(...matchers) {
         const n = matchers.length
 
-        if (this.tokens.length - this.i >= n) {
+        if (this.tokens.length - this._i >= n) {
             const res = matchers.every((m, j) =>
-                m.matches(this.tokens[this.i + j])
+                m.matches(this.tokens[this._i + j])
             )
 
             if (res) {
                 const matched = /** @type {any} */ (
                     this.tokens
-                        .slice(this.i, this.i + n)
+                        .slice(this._i, this._i + n)
                         .map((t) =>
                             t instanceof Group ? augmentGroup(this, t) : t
                         )
                 )
-                this.failedMatches = []
-                this.i += n
+                this._failedMatches = []
+                this._i += n
 
                 if (matched.length == 1) {
                     return matched[0]
@@ -343,7 +374,7 @@ export class TokenReader {
             }
         }
 
-        this.failedMatches.push(matchers)
+        this._failedMatches.push(matchers)
         return None
     }
 
@@ -352,30 +383,30 @@ export class TokenReader {
      * @returns {TokenReader}
      */
     endMatch(throwFail = true) {
-        const n = this.failedMatches.length
+        const n = this._failedMatches.length
 
         if (n > 0) {
             if (throwFail) {
-                const i = Math.min(this.i, this.tokens.length - 1)
+                const i = Math.min(this._i, this.tokens.length - 1)
                 if (typeof throwFail == "string") {
                     this.errors.syntax(this.tokens[i].site, throwFail)
                 } else {
-                    const longest = this.failedMatches.reduce(
+                    const longest = this._failedMatches.reduce(
                         (prev, fm) => Math.max(prev, fm.length),
                         0
                     )
 
                     this.errors.syntax(
                         this.tokens[i].site,
-                        `expected '${this.failedMatches.map((fm, i) => fm.map((f) => f.toString()).join(" ") + (i < n - 2 ? ", " : i < n - 1 ? " or " : "")).join("")}', got '${this.tokens
-                            .slice(this.i, longest)
+                        `expected '${this._failedMatches.map((fm, i) => fm.map((f) => f.toString()).join(" ") + (i < n - 2 ? ", " : i < n - 1 ? " or " : "")).join("")}', got '${this.tokens
+                            .slice(this._i, longest)
                             .map((t) => t.toString())
                             .join(" ")}'`
                     )
                 }
             }
 
-            this.failedMatches = []
+            this._failedMatches = []
         }
 
         return this
@@ -406,7 +437,7 @@ export class TokenReader {
     /**
      * @template T
      * @param {string} kind
-     * @param {(tr: TokenReader) => T} callback
+     * @param {(tr: TokenReaderI) => T} callback
      * @param {{length?: number} | {minLength?: number, maxLength?: number}} options
      * @returns {T[]}
      */
@@ -489,8 +520,8 @@ export class TokenReader {
      * @returns {Option<Token>}
      */
     readToken() {
-        const t = this.tokens[this.i]
-        this.i += 1
+        const t = this.tokens[this._i]
+        this._i += 1
 
         if (!t) {
             this.errors.syntax(
@@ -532,12 +563,12 @@ export class TokenReader {
     }
 
     unreadToken() {
-        this.i = Math.max(this.i - 1, 0)
+        this._i = Math.max(this._i - 1, 0)
     }
 }
 
 /**
- * @param {TokenReader} r
+ * @param {TokenReaderI} r
  * @param {Group<Token[]>} t
  * @returns {Group<TokenReader>}
  */
