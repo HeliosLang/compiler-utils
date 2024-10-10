@@ -27,9 +27,24 @@ export { TokenSite } from "./TokenSite.js"
 export { Word } from "./Word.js"
 
 /**
+ * @template {string} [T=string]
+ * @typedef {import("./Token.js").SymbolTokenI<T>} SymbolTokenI
+ */
+
+/**
+ * @typedef {import("./Group.js").TokensLike} TokensLike
+ */
+
+/**
+ * @template {TokensLike} [F=Token[]]
+ * @typedef {import("./Group.js").GenericGroupI<F>} GenericGroupI
+ */
+
+/**
  * @typedef {import("./SourceMap.js").SourceMap} SourceMap
  * @typedef {import("./Token.js").Token} Token
  * @typedef {import("./TokenReader.js").TokenReaderI} TokenReaderI
+ * @typedef {import("./Token.js").WordI} WordI
  */
 
 /**

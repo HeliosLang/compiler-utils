@@ -25,6 +25,7 @@ import { Word } from "./Word.js"
  * @typedef {import("./SourceMap.js").SourceMap} SourceMap
  * @typedef {import("./Token.js").GroupKind} GroupKind
  * @typedef {import("./Token.js").Token} Token
+ * @typedef {import("./Token.js").TokenGroupI} TokenGroupI
  */
 
 /**
@@ -799,7 +800,7 @@ export class Tokenizer {
      * Separates tokens in fields (separted by commas)
      * @param {SymbolTokenI<GroupKind>} open
      * @param {Token[]} ts
-     * @returns {Group}
+     * @returns {TokenGroupI}
      */
     buildGroup(open, ts) {
         /**
