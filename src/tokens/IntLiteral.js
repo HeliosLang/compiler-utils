@@ -1,16 +1,27 @@
-import { TokenSite } from "./TokenSite.js"
+import { makeDummySite } from "./TokenSite.js"
 
 /**
  * @typedef {import("../errors/index.js").Site} Site
- * @typedef {import("./Token.js").IntLiteralI} IntLiteralI
+ * @typedef {import("./Token.js").IntLiteral} IntLiteral
  * @typedef {import("./Token.js").Token} Token
  */
 
 /**
- * Signed int literal token
- * @implements {IntLiteralI}
+ * @param {{
+ *   value: bigint
+ *   site?: Site
+ * }} args
+ * @returns {IntLiteral}
  */
-export class IntLiteral {
+export function makeIntLiteral(args) {
+    return new IntLiteralImpl(args.value, args.site ?? makeDummySite())
+}
+
+/**
+ * Signed int literal token
+ * @implements {IntLiteral}
+ */
+class IntLiteralImpl {
     /**
      * @readonly
      * @type {bigint}
@@ -27,7 +38,7 @@ export class IntLiteral {
      * @param {bigint} value
      * @param {Site} site
      */
-    constructor(value, site = TokenSite.dummy()) {
+    constructor(value, site) {
         this.value = value
         this.site = site
     }

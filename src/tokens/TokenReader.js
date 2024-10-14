@@ -1,8 +1,13 @@
-import { None, isNone, isSome } from "@helios-lang/type-utils"
-import { ErrorCollector } from "../errors/ErrorCollector.js"
-import { Group } from "./Group.js"
-import { TokenSite } from "./TokenSite.js"
-import { Word } from "./Word.js"
+import { None, isNone } from "@helios-lang/type-utils"
+import { makeErrorCollector } from "../errors/index.js"
+import { makeGroup } from "./GenericGroup.js"
+import { isGroup } from "./Token.js"
+import { makeDummySite, makeTokenSite } from "./TokenSite.js"
+
+/**
+ * @template {TokensLike} [T=Token[]]
+ * @typedef {import("./GenericGroup.js").GenericGroup<T>} GenericGroup
+ */
 
 /**
  * @template {Token} [T=Token]
@@ -10,14 +15,16 @@ import { Word } from "./Word.js"
  */
 
 /**
- * @typedef {import("../errors/index.js").ErrorCollectorI} ErrorCollectorI
+ * @typedef {import("../errors/index.js").ErrorCollector} ErrorCollector
+ * @typedef {import("./GenericGroup.js").TokensLike} TokensLike
  * @typedef {import("./Token.js").Token} Token
- * @typedef {import("./Token.js").WordI} WordI
+ * @typedef {import("./Token.js").TokenGroup} TokenGroup
+ * @typedef {import("./Token.js").Word} Word
  */
 
 /**
  * @template {Token} T
- * @typedef {T extends Group ? Group<TokenReaderI> : T} AugmentGroup
+ * @typedef {T extends GenericGroup ? GenericGroup<TokenReader> : T} AugmentGroup
  */
 
 /**
@@ -26,39 +33,44 @@ import { Word } from "./Word.js"
  */
 
 /**
- * @template {(Group<TokenReaderI> | Token)[]} Tokens
+ * @template {(GenericGroup<TokenReader> | Token)[]} Tokens
  * @typedef {Tokens extends [infer T] ? T : Tokens} UnwrapSingleton
  */
 
 /**
  * @typedef {{
  *   tokens: Token[]
- *   errors: ErrorCollectorI
+ *   errors: ErrorCollector
  *   rest: Token[]
- *   assert: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => TokenReaderI
+ *   assert: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => TokenReader
  *   end(): void
- *   findNext: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<[TokenReaderI, ...MatcherTokens<Matchers>]>
- *   findNextMatch: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<[TokenReaderI, ...MatcherTokens<Matchers>]>
- *   findLast: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<[TokenReaderI, ...MatcherTokens<Matchers>]>
- *   findLastMatch: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<[TokenReaderI, ...MatcherTokens<Matchers>]>
- *   readUntil: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => TokenReaderI
+ *   findNext: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<[TokenReader, ...MatcherTokens<Matchers>]>
+ *   findNextMatch: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<[TokenReader, ...MatcherTokens<Matchers>]>
+ *   findLast: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<[TokenReader, ...MatcherTokens<Matchers>]>
+ *   findLastMatch: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<[TokenReader, ...MatcherTokens<Matchers>]>
+ *   readUntil: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => TokenReader
  *   isEof(): boolean
  *   matches: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<UnwrapSingleton<MatcherTokens<Matchers>>>
- *   endMatch(throwFail?: boolean | string): TokenReaderI
- *   readField(kind: string): Option<TokenReaderI>
- *   readFields: <T>(kind: string, callback: (tr: TokenReaderI) => T, options: ({length?: number} | {minLength?: number, maxLength?: number})) => T[]
- *   readGroup(kind: string): Option<Group>
- *   readNonKeyword(): Option<WordI>
- *   readToken(): Option<Token>
- *   readWord(value?: Option<string>): Option<WordI>
+ *   endMatch(throwFail?: boolean | string): TokenReader
  *   unreadToken(): void
- * }} TokenReaderI
+ * }} TokenReader
  */
 
 /**
- * @implements {TokenReaderI}
+ * @param {{
+ *   tokens: Token[]
+ *   errors?: ErrorCollector
+ * }} args
+ * @returns {TokenReader}
  */
-export class TokenReader {
+export function makeTokenReader(args) {
+    return new TokenReaderImpl(args.tokens, args.errors ?? makeErrorCollector())
+}
+
+/**
+ * @implements {TokenReader}
+ */
+class TokenReaderImpl {
     /**
      * @readonly
      * @type {Token[]}
@@ -67,7 +79,7 @@ export class TokenReader {
 
     /**
      * @readonly
-     * @type {ErrorCollectorI}
+     * @type {ErrorCollector}
      */
     errors
 
@@ -85,9 +97,9 @@ export class TokenReader {
 
     /**
      * @param {Token[]} tokens
-     * @param {ErrorCollectorI} errors
+     * @param {ErrorCollector} errors
      */
-    constructor(tokens, errors = new ErrorCollector()) {
+    constructor(tokens, errors) {
         this.tokens = tokens
         this.errors = errors
         this._i = 0
@@ -113,15 +125,11 @@ export class TokenReader {
             if (i == this.tokens.length) {
                 let lastSite = this.tokens[this.tokens.length - 1].site
 
-                if (
-                    lastSite instanceof TokenSite &&
-                    lastSite.endLine &&
-                    lastSite.endColumn
-                ) {
-                    lastSite = new TokenSite({
+                if (lastSite.end) {
+                    lastSite = makeTokenSite({
                         file: lastSite.file,
-                        startLine: lastSite.endLine,
-                        startColumn: lastSite.endColumn
+                        startLine: lastSite.end.line,
+                        startColumn: lastSite.end.column
                     })
                 }
 
@@ -210,7 +218,7 @@ export class TokenReader {
                         this.tokens
                             .slice(i, i + n)
                             .map((t) =>
-                                t instanceof Group ? augmentGroup(this, t) : t
+                                isGroup(t) ? augmentGroup(this, t) : t
                             )
                     )
 
@@ -218,7 +226,10 @@ export class TokenReader {
                     this._failedMatches = []
 
                     return /** @type {any} */ ([
-                        new TokenReader(this.tokens.slice(i0, i), this.errors),
+                        new TokenReaderImpl(
+                            this.tokens.slice(i0, i),
+                            this.errors
+                        ),
                         ...matched
                     ])
                 }
@@ -288,7 +299,7 @@ export class TokenReader {
                         this.tokens
                             .slice(i, i + n)
                             .map((t) =>
-                                t instanceof Group ? augmentGroup(this, t) : t
+                                isGroup(t) ? augmentGroup(this, t) : t
                             )
                     )
 
@@ -296,7 +307,10 @@ export class TokenReader {
                     this._failedMatches = []
 
                     return /** @type {any} */ ([
-                        new TokenReader(this.tokens.slice(i0, i), this.errors),
+                        new TokenReaderImpl(
+                            this.tokens.slice(i0, i),
+                            this.errors
+                        ),
                         ...matched
                     ])
                 }
@@ -326,7 +340,7 @@ export class TokenReader {
 
             return reader
         } else {
-            let reader = new TokenReader(this.tokens, this.errors)
+            let reader = new TokenReaderImpl(this.tokens, this.errors)
 
             reader._i = this._i
             this._i = this.tokens.length
@@ -359,9 +373,7 @@ export class TokenReader {
                 const matched = /** @type {any} */ (
                     this.tokens
                         .slice(this._i, this._i + n)
-                        .map((t) =>
-                            t instanceof Group ? augmentGroup(this, t) : t
-                        )
+                        .map((t) => (isGroup(t) ? augmentGroup(this, t) : t))
                 )
                 this._failedMatches = []
                 this._i += n
@@ -413,110 +425,7 @@ export class TokenReader {
     }
 
     /**
-     * @param {string} kind
-     * @returns {Option<TokenReader>}
-     */
-    readField(kind) {
-        const g = this.readGroup(kind)
-
-        if (!g) {
-            return None
-        }
-
-        if (g.fields.length != 1) {
-            this.errors.syntax(
-                g.site,
-                `expected 1 field, got ${g.fields.length} fields`
-            )
-            return None
-        }
-
-        return new TokenReader(g.fields[0], this.errors)
-    }
-
-    /**
-     * @template T
-     * @param {string} kind
-     * @param {(tr: TokenReaderI) => T} callback
-     * @param {{length?: number} | {minLength?: number, maxLength?: number}} options
-     * @returns {T[]}
-     */
-    readFields(kind, callback, options = {}) {
-        const g = this.readGroup(kind)
-
-        if (!g) {
-            return []
-        }
-
-        if ("length" in options && g.fields.length != options.length) {
-            this.errors.syntax(
-                g.site,
-                `expected ${options.length} fields, got ${g.fields.length}`
-            )
-        }
-
-        if (
-            "minLength" in options &&
-            g.fields.length < (options?.minLength ?? 0)
-        ) {
-            this.errors.syntax(
-                g.site,
-                `expected at least ${options.minLength} fields, got ${g.fields.length}`
-            )
-        }
-
-        if (
-            "maxLength" in options &&
-            g.fields.length > (options?.maxLength ?? Number.POSITIVE_INFINITY)
-        ) {
-            this.errors.syntax(
-                g.site,
-                `expected at most ${options.maxLength} fields, got ${g.fields.length}`
-            )
-        }
-
-        return g.fields.map((f) => callback(new TokenReader(f, this.errors)))
-    }
-
-    /**
-     * @param {string} kind
-     * @returns {Option<Group>}
-     */
-    readGroup(kind) {
-        const t = this.readToken()
-
-        if (t) {
-            const g = Group.from(t)
-
-            if (!g || !g.isKind(kind)) {
-                this.errors.syntax(
-                    t.site,
-                    `expected ${kind}${Group.otherSymbol(kind)}, got ${t.toString(false)}`
-                )
-                return None
-            }
-
-            return g
-        } else {
-            return None
-        }
-    }
-
-    /**
-     * @returns {Option<Word>}
-     */
-    readNonKeyword() {
-        const w = this.readWord()
-
-        if (w && w.isKeyword()) {
-            this.errors.syntax(w.site, `unexpected keyword ${w.toString()}`)
-            return None
-        } else {
-            return w
-        }
-    }
-
-    /**
+     * @private
      * @returns {Option<Token>}
      */
     readToken() {
@@ -525,7 +434,7 @@ export class TokenReader {
 
         if (!t) {
             this.errors.syntax(
-                this.tokens[this.tokens.length - 1]?.site ?? TokenSite.dummy(),
+                this.tokens[this.tokens.length - 1]?.site ?? makeDummySite(),
                 `unexpected EOF`
             )
             return None
@@ -534,49 +443,21 @@ export class TokenReader {
         return t
     }
 
-    /**
-     * @param {Option<string>} value
-     * @returns {Option<Word>}
-     */
-    readWord(value = None) {
-        const t = this.readToken()
-        const w = Word.from(t)
-
-        if (t && !w) {
-            this.errors.syntax(
-                t.site,
-                `expected ${value ? value : "word"}, got ${t.toString(false)}`
-            )
-        } else if (isSome(value)) {
-            if (w && !w.matches(value)) {
-                this.errors.syntax(
-                    w.site,
-                    `expected ${value}, got ${w.toString()}`
-                )
-                return None
-            } else {
-                return w
-            }
-        } else {
-            return w
-        }
-    }
-
     unreadToken() {
         this._i = Math.max(this._i - 1, 0)
     }
 }
 
 /**
- * @param {TokenReaderI} r
- * @param {Group<Token[]>} t
- * @returns {Group<TokenReader>}
+ * @param {TokenReader} r
+ * @param {GenericGroup<Token[]>} t
+ * @returns {GenericGroup<TokenReader>}
  */
 function augmentGroup(r, t) {
-    return new Group(
-        t.kind,
-        t.fields.map((f) => new TokenReader(f, r.errors)),
-        t.separators,
-        t.site
-    )
+    return makeGroup({
+        kind: t.kind,
+        fields: t.fields.map((f) => new TokenReaderImpl(f, r.errors)),
+        separators: t.separators,
+        site: t.site
+    })
 }

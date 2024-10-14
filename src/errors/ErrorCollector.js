@@ -1,25 +1,32 @@
 import { CompilerError } from "./CompilerError.js"
 
 /**
- * @typedef {import("./CompilerError.js").CompilerErrorI} CompilerErrorI
  * @typedef {import("./Site.js").Site} Site
  */
 
 /**
  * @typedef {{
- *   errors: CompilerErrorI[]
+ *   errors: CompilerError[]
  *   syntax(site: Site, msg: string): void
  *   throw(): void
- * }} ErrorCollectorI
+ * }} ErrorCollector
  */
 
 /**
- * @implements {ErrorCollectorI}
+ * @param {{}} _args
+ * @returns {ErrorCollector}
  */
-export class ErrorCollector {
+export function makeErrorCollector(_args = {}) {
+    return new ErrorCollectorImpl()
+}
+
+/**
+ * @implements {ErrorCollector}
+ */
+class ErrorCollectorImpl {
     /**
      * @readonly
-     * @type {CompilerErrorI[]}
+     * @type {CompilerError[]}
      */
     errors
 

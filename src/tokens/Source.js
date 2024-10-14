@@ -18,15 +18,26 @@ import { None } from "@helios-lang/type-utils"
  *   getWord(i: number): string
  *   getPosition(i: number): [number, number]
  *   pretty(): string
- * }} SourceI
+ * }} Source
  */
+
+/**
+ * @param {{
+ *   content: string
+ *   options?: SourceOptions
+ * }} args
+ * @returns {Source}
+ */
+export function makeSource(args) {
+    return new SourceImpl(args.content, args.options ?? {})
+}
 
 /**
  * A Source instance wraps a string so we can use it cheaply as a reference inside a Site.
  * Also used by VSCode plugin
- * @implements {SourceI}
+ * @implements {Source}
  */
-export class Source {
+class SourceImpl {
     /**
      * @readonly
      * @type {string}

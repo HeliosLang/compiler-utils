@@ -1,41 +1,71 @@
-import { TokenSite } from "./TokenSite.js"
+import { makeDummySite, makeTokenSite } from "./TokenSite.js"
 
 /**
  * @typedef {import("../errors/Site.js").Site} Site
- * @typedef {import("./Source.js").SourceI} SourceI
+ * @typedef {import("./Source.js").Source} Source
  * @typedef {import("./SourceMap.js").SourceMap} SourceMap
  */
 
-export class SourceIndex {
+/**
+ * @typedef {{
+ *   site: Site
+ *   incr(): void
+ *   decr(): void
+ *   readChar(): string
+ *   peekChar(): string
+ *   unreadChar(): void
+ * }} SourceIndex
+ */
+
+/**
+ * @param {{
+ *   source: Source
+ *   sourceMap?: Option<SourceMap>
+ * }} args
+ * @returns {SourceIndex}
+ */
+export function makeSourceIndex(args) {
+    return new SourceIndexImpl(args.source, args.sourceMap)
+}
+
+/**
+ * @implements {SourceIndex}
+ */
+class SourceIndexImpl {
     /**
+     * @private
      * @readonly
-     * @type {SourceI}
+     * @type {Source}
      */
     source
 
     /**
+     * @private
      * @readonly
      * @type {Option<SourceMap>}
      */
     sourceMap
 
     /**
+     * @private
      * @type {number}
      */
     value
 
     /**
+     * @private
      * @type {number}
      */
     column
 
     /**
+     * @private
      * @type {number}
      */
     line
 
     /**
-     * @param {SourceI} source
+     * @param {Source} source
      * @param {Option<SourceMap>} sourceMap
      */
     constructor(source, sourceMap) {
@@ -52,9 +82,9 @@ export class SourceIndex {
      */
     get site() {
         if (this.sourceMap) {
-            return this.sourceMap.get(this.value) ?? TokenSite.dummy()
+            return this.sourceMap.get(this.value) ?? makeDummySite()
         } else {
-            return new TokenSite({
+            return makeTokenSite({
                 file: this.source.name,
                 startLine: this.line,
                 startColumn: this.column

@@ -1,22 +1,23 @@
 import { bytesToHex, equalsBytes } from "@helios-lang/codec-utils"
 import { None } from "@helios-lang/type-utils"
-import { Group } from "./Group.js"
-import { SymbolToken } from "./SymbolToken.js"
+import { getOtherGroupSymbol } from "./GenericGroup.js"
+import { makeSymbolToken } from "./SymbolToken.js"
+import { isGroup } from "./Token.js"
 
 /**
  * @template {string} [T=string]
- * @typedef {import("./Token.js").SymbolTokenI<T>} SymbolTokenI
+ * @typedef {import("./Token.js").SymbolToken<T>} SymbolToken
  */
 
 /**
- * @typedef {import("./Token.js").BoolLiteralI} BoolLiteralI
- * @typedef {import("./Token.js").ByteArrayLiteralI} ByteArrayLiteralI
- * @typedef {import("./Token.js").IntLiteralI} IntLiteralI
- * @typedef {import("./Token.js").RealLiteralI} RealLiteralI
- * @typedef {import("./Token.js").StringLiteralI} StringLiteralI
+ * @typedef {import("./Token.js").BoolLiteral} BoolLiteral
+ * @typedef {import("./Token.js").ByteArrayLiteral} ByteArrayLiteral
+ * @typedef {import("./Token.js").IntLiteral} IntLiteral
+ * @typedef {import("./Token.js").RealLiteral} RealLiteral
+ * @typedef {import("./Token.js").StringLiteral} StringLiteral
  * @typedef {import("./Token.js").Token} Token
- * @typedef {import("./Token.js").TokenGroupI} TokenGroupI
- * @typedef {import("./Token.js").WordI} WordI
+ * @typedef {import("./Token.js").TokenGroup} TokenGroup
+ * @typedef {import("./Token.js").Word} Word
  */
 
 /**
@@ -30,7 +31,7 @@ import { SymbolToken } from "./SymbolToken.js"
  */
 
 /**
- * @type {TokenMatcher<SymbolTokenI>}
+ * @type {TokenMatcher<SymbolToken>}
  */
 export const anySymbol = {
     matches: (t) => (t.kind == "symbol" ? t : None),
@@ -38,7 +39,7 @@ export const anySymbol = {
 }
 
 /**
- * @type {TokenMatcher<WordI>}
+ * @type {TokenMatcher<Word>}
  */
 export const anyWord = {
     matches: (t) => (t.kind == "word" ? t : None),
@@ -47,7 +48,7 @@ export const anyWord = {
 
 /**
  * @param {Option<boolean>} value
- * @returns {TokenMatcher<BoolLiteralI>}
+ * @returns {TokenMatcher<BoolLiteral>}
  */
 export function boollit(value = None) {
     return {
@@ -59,7 +60,7 @@ export function boollit(value = None) {
 
 /**
  * @param {Option<number[] | Uint8Array>} value
- * @returns {TokenMatcher<ByteArrayLiteralI>}
+ * @returns {TokenMatcher<ByteArrayLiteral>}
  */
 export function byteslit(value = None) {
     return {
@@ -75,11 +76,11 @@ export function byteslit(value = None) {
 /**
  * @param {string} kind
  * @param {Option<{length: number} | {minLength: number} | {maxLength: number} | {minLength: number, maxLength: number }>} options
- * @returns {TokenMatcher<TokenGroupI>}
+ * @returns {TokenMatcher<TokenGroup>}
  */
 export function group(kind, options = None) {
     /**
-     * @param {TokenGroupI} g
+     * @param {TokenGroup} g
      * @returns {boolean}
      */
     function matchLength(g) {
@@ -105,19 +106,15 @@ export function group(kind, options = None) {
 
     return {
         matches: (t) =>
-            (t.kind == "(" || t.kind == "[" || t.kind == "{") &&
-            t.isKind(kind) &&
-            matchLength(t)
-                ? t
-                : None,
+            isGroup(t) && t.kind == kind && matchLength(t) ? t : None,
         toString: () =>
-            `${kind}${options && "length" in options ? `<${options.length} entries>` : "..."}${Group.otherSymbol(kind)}`
+            `${kind}${options && "length" in options ? `<${options.length} entries>` : "..."}${getOtherGroupSymbol(kind)}`
     }
 }
 
 /**
  * @param {Option<string | number | bigint>} value
- * @returns {TokenMatcher<IntLiteralI>}
+ * @returns {TokenMatcher<IntLiteral>}
  */
 export function intlit(value = None) {
     return {
@@ -152,7 +149,7 @@ export function oneOf(matchers) {
 }
 
 /**
- * @type {TokenMatcher<RealLiteralI>}
+ * @type {TokenMatcher<RealLiteral>}
  */
 export const reallit = {
     matches: (t) => (t.kind == "real" ? t : None),
@@ -161,7 +158,7 @@ export const reallit = {
 
 /**
  * @param {Option<string>} value
- * @returns {TokenMatcher<StringLiteralI>}
+ * @returns {TokenMatcher<StringLiteral>}
  */
 export function strlit(value = None) {
     return {
@@ -173,10 +170,10 @@ export function strlit(value = None) {
 
 /**
  * @param {string} v
- * @returns {TokenMatcher<SymbolTokenI>}
+ * @returns {TokenMatcher<SymbolToken>}
  */
 export function symbol(v) {
-    const s = new SymbolToken(v)
+    const s = makeSymbolToken({ value: v })
 
     return {
         matches: (t) => (s.isEqual(t) ? s : None),
@@ -195,7 +192,7 @@ export const wildcard = {
 /**
  * @param {string} s
  * @param {Option<{caseInsensitive: boolean}>} options
- * @returns {TokenMatcher<WordI>}
+ * @returns {TokenMatcher<Word>}
  */
 export function word(s, options = None) {
     return {

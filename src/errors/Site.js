@@ -10,7 +10,8 @@
  *   file: string
  *   end?: Pos
  *   alias?: string
- *   toString: () => string
+ *   toString(): string
+ *   withAlias(alias: string): void
  * }} Site
  */
 

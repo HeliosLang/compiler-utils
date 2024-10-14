@@ -1,20 +1,25 @@
 import { strictEqual, throws } from "node:assert"
 import { describe, it } from "node:test"
-import { Group } from "./Group.js"
+import { makeGroup } from "./GenericGroup.js"
 import { anyWord, group, symbol, wildcard, word } from "./TokenMatcher.js"
-import { TokenReader } from "./TokenReader.js"
-import { Word } from "./Word.js"
+import { makeTokenReader } from "./TokenReader.js"
+import { makeWord } from "./Word.js"
 
 /**
  * @typedef {import("./Token.js").Token} Token
- * @typedef {import("./TokenReader.js").TokenReaderI} TokenReaderI
+ * @typedef {import("./Token.js").Word} Word
+ * @typedef {import("./TokenReader.js").TokenReader} TokenReader
  */
 
-describe(`${TokenReader.name}([con bool false])`, () => {
-    const testTokens = [new Word("con"), new Word("bool"), new Word("false")]
+describe(`TokenReader with tokens [con bool false]`, () => {
+    const testTokens = [
+        makeWord({ value: "con" }),
+        makeWord({ value: "bool" }),
+        makeWord({ value: "false" })
+    ]
 
     it("matches [con bool false] using [word, word, wildcard]", () => {
-        const r = new TokenReader(testTokens)
+        const r = makeTokenReader({ tokens: testTokens })
 
         let m
 
@@ -26,7 +31,7 @@ describe(`${TokenReader.name}([con bool false])`, () => {
     })
 
     it("fails when matching [con bool false] using [word, word, symbol]", () => {
-        const r = new TokenReader(testTokens)
+        const r = makeTokenReader({ tokens: testTokens })
 
         let m
         if ((m = r.matches(word("con"), word("bool"), symbol(".")))) {
@@ -40,7 +45,7 @@ describe(`${TokenReader.name}([con bool false])`, () => {
     })
     ;("(program 0.0.0 (con bytes #))")
     it("matches [con bool false] using [word, word] [word]", () => {
-        const r = new TokenReader(testTokens)
+        const r = makeTokenReader({ tokens: testTokens })
 
         let m
 
@@ -57,9 +62,13 @@ describe(`${TokenReader.name}([con bool false])`, () => {
 
     it("matches [(con bool false)] using [group] [word, word, word]", () => {
         /**
-         * @type {TokenReaderI}
+         * @type {TokenReader}
          */
-        let r = new TokenReader([new Group("(", [testTokens], [])])
+        let r = makeTokenReader({
+            tokens: [
+                makeGroup({ kind: "(", fields: [testTokens], separators: [] })
+            ]
+        })
         let m
 
         if ((m = r.matches(group("(")))) {
@@ -78,13 +87,13 @@ describe(`${TokenReader.name}([con bool false])`, () => {
     })
 
     it("finds bool in [con bool false] and returns correct readers", () => {
-        let r = new TokenReader(testTokens)
+        let r = makeTokenReader({ tokens: testTokens })
 
         let m
 
         if ((m = r.findNext(word("bool")))) {
             /**
-             * @satisfies {[TokenReaderI, Word]}
+             * @satisfies {[TokenReader, Word]}
              */
             const [ra, _w] = m
 
@@ -100,7 +109,7 @@ describe(`${TokenReader.name}([con bool false])`, () => {
 
     it("reading after findLast(bool) returns false", () => {
         let tt = testTokens.slice(0, 2).concat(testTokens.slice(1))
-        let r = new TokenReader(tt)
+        let r = makeTokenReader({ tokens: tt })
 
         let m
 
@@ -122,13 +131,13 @@ describe(`${TokenReader.name}([con bool false])`, () => {
     })
 
     it("reading after findLastMatch(con, bool) returns false", () => {
-        let r = new TokenReader(testTokens)
+        let r = makeTokenReader({ tokens: testTokens })
 
         let m
 
         if ((m = r.findLastMatch(word("con"), word("bool")))) {
             /**
-             * @satisfies {[TokenReaderI, Word, Word]}
+             * @satisfies {[TokenReader, Word, Word]}
              */
             const [ra, _c, _b] = m
 
@@ -137,7 +146,7 @@ describe(`${TokenReader.name}([con bool false])`, () => {
     })
 
     it("doesn't find ; in [con bool false]", () => {
-        let r = new TokenReader(testTokens)
+        let r = makeTokenReader({ tokens: testTokens })
 
         r.findNext(symbol(";"))
 
@@ -147,7 +156,7 @@ describe(`${TokenReader.name}([con bool false])`, () => {
     })
 
     it("readWord after readUntil(bool) returns false", () => {
-        let r = new TokenReader(testTokens)
+        let r = makeTokenReader({ tokens: testTokens })
 
         const ra = r.readUntil(word("bool"))
 
@@ -158,7 +167,7 @@ describe(`${TokenReader.name}([con bool false])`, () => {
     })
 
     it("isEof is true after ending", () => {
-        let r = new TokenReader(testTokens)
+        let r = makeTokenReader({ tokens: testTokens })
 
         r.end()
 

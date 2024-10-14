@@ -1,31 +1,37 @@
 import { encodeUtf8, hexToBytes } from "@helios-lang/codec-utils"
 import { isSome } from "@helios-lang/type-utils"
-import { ErrorCollector } from "../errors/index.js"
-import { BoolLiteral } from "./BoolLiteral.js"
-import { ByteArrayLiteral } from "./ByteArrayLiteral.js"
-import { Comment } from "./Comment.js"
-import { Group } from "./Group.js"
-import { IntLiteral } from "./IntLiteral.js"
-import { REAL_PRECISION, RealLiteral } from "./RealLiteral.js"
-import { SourceIndex } from "./SourceIndex.js"
-import { StringLiteral } from "./StringLiteral.js"
-import { SymbolToken } from "./SymbolToken.js"
-import { TokenSite } from "./TokenSite.js"
-import { Word } from "./Word.js"
+import { makeErrorCollector } from "../errors/index.js"
+import { makeBoolLiteral } from "./BoolLiteral.js"
+import { makeByteArrayLiteral } from "./ByteArrayLiteral.js"
+import { makeComment } from "./Comment.js"
+import {
+    getOtherGroupSymbol,
+    isGroupCloseSymbol,
+    isGroupOpenSymbol,
+    makeGroup
+} from "./GenericGroup.js"
+import { makeIntLiteral } from "./IntLiteral.js"
+import { REAL_PRECISION, makeRealLiteral } from "./RealLiteral.js"
+import { makeSourceIndex } from "./SourceIndex.js"
+import { makeStringLiteral } from "./StringLiteral.js"
+import { makeSymbolToken } from "./SymbolToken.js"
+import { isDummySite, makeTokenSite } from "./TokenSite.js"
+import { makeWord } from "./Word.js"
 
 /**
  * @template {string} [T=string]
- * @typedef {import("./Token.js").SymbolTokenI<T>} SymbolTokenI
+ * @typedef {import("./Token.js").SymbolToken<T>} SymbolToken
  */
 
 /**
- * @typedef {import("../errors/index.js").ErrorCollectorI} ErrorCollectorI
+ * @typedef {import("../errors/index.js").ErrorCollector} ErrorCollector
  * @typedef {import("../errors/index.js").Site} Site
- * @typedef {import("./Source.js").SourceI} SourceI
+ * @typedef {import("./Source.js").Source} Source
+ * @typedef {import("./SourceIndex.js").SourceIndex} SourceIndex
  * @typedef {import("./SourceMap.js").SourceMap} SourceMap
  * @typedef {import("./Token.js").GroupKind} GroupKind
  * @typedef {import("./Token.js").Token} Token
- * @typedef {import("./Token.js").TokenGroupI} TokenGroupI
+ * @typedef {import("./Token.js").TokenGroup} TokenGroup
  */
 
 /**
@@ -36,42 +42,65 @@ import { Word } from "./Word.js"
  *   tokenizeReal?: boolean
  *   preserveComments?: boolean
  *   allowLeadingZeroes?: boolean
- *   errorCollector?: ErrorCollectorI
+ *   errorCollector?: ErrorCollector
  * }} TokenizerOptions
  */
 
 const DEFAULT_VALID_FIRST_LETTERS =
     "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-export class Tokenizer {
+/**
+ * @typedef {{
+ *   readonly errors: ErrorCollector
+ *   tokenize(nestGroups?: boolean): Token[]
+ *   stream(): Generator<Token>
+ * }} Tokenizer
+ */
+
+/**
+ * @param {{source: Source, options?: TokenizerOptions}} args
+ * @returns {Tokenizer}
+ */
+export function makeTokenizer(args) {
+    return new TokenizerImpl(args.source, args.options ?? {})
+}
+
+/**
+ * @implements {Tokenizer}
+ */
+class TokenizerImpl {
     /**
+     * @private
      * @readonly
      * @type {number}
      */
-    realPrecision
+    _realPrecision
 
     /**
+     * @private
      * @readonly
      * @type {boolean}
      */
-    tokenizeReal
+    _tokenizeReal
 
     /**
+     * @private
      * @readonly
      * @type {boolean}
      */
-    preserveComments
+    _preserveComments
 
     /**
+     * @private
      * @readonly
      * @type {boolean}
      */
-    allowLeadingZeroes
+    _allowLeadingZeroes
 
     /**
      * Basic syntax errors are accumulated here
      * @readonly
-     * @type {ErrorCollectorI}
+     * @type {ErrorCollector}
      */
     errors
 
@@ -97,15 +126,15 @@ export class Tokenizer {
     _tokens
 
     /**
-     * @param {SourceI} source
+     * @param {Source} source
      * @param {TokenizerOptions} options
      */
     constructor(source, options = {}) {
-        this.realPrecision = options?.realPrecision ?? REAL_PRECISION
-        this.tokenizeReal = options?.tokenizeReal ?? true
-        this.preserveComments = options?.preserveComments ?? false
-        this.allowLeadingZeroes = options?.allowLeadingZeroes ?? false
-        this.errors = options.errorCollector ?? new ErrorCollector()
+        this._realPrecision = options?.realPrecision ?? REAL_PRECISION
+        this._tokenizeReal = options?.tokenizeReal ?? true
+        this._preserveComments = options?.preserveComments ?? false
+        this._allowLeadingZeroes = options?.allowLeadingZeroes ?? false
+        this.errors = options.errorCollector ?? makeErrorCollector()
 
         this._validFirstLetters = new Set(
             (
@@ -113,7 +142,10 @@ export class Tokenizer {
                 (options?.extraValidFirstLetters ?? "")
             ).split("")
         )
-        this._sourceIndex = new SourceIndex(source, options.sourceMap)
+        this._sourceIndex = makeSourceIndex({
+            source,
+            sourceMap: options.sourceMap
+        })
         this._tokens = [] // reset to empty to list at start of tokenize()
     }
 
@@ -174,6 +206,7 @@ export class Tokenizer {
     }
 
     /**
+     * @private
      * @type {Site}
      */
     get currentSite() {
@@ -181,16 +214,17 @@ export class Tokenizer {
     }
 
     /**
+     * @private
      * @param {Site} start
-     * @returns {TokenSite}
+     * @returns {Site}
      */
     rangeSite(start) {
         const end = this.currentSite
 
-        if (TokenSite.isDummy(end)) {
-            return TokenSite.fromSite(start)
+        if (isDummySite(end)) {
+            return start
         } else {
-            return new TokenSite({
+            return makeTokenSite({
                 file: start.file,
                 startLine: start.line,
                 startColumn: start.column,
@@ -202,6 +236,7 @@ export class Tokenizer {
     }
 
     /**
+     * @private
      * @param {Site} site
      * @param {string} msg
      */
@@ -210,23 +245,16 @@ export class Tokenizer {
     }
 
     /**
+     * @private
      * @param {Token} t
      */
     pushToken(t) {
         this._tokens.push(t)
-
-        /*if (this.#codeMap !== null && this.#codeMapPos < this.#codeMap.length) {
-			let pair = (this.#codeMap[this.#codeMapPos]);
-
-			if (pair[0] == t.site.startPos) {
-				t.site.setCodeMapSite(pair[1]);
-				this.#codeMapPos += 1;
-			}
-		}*/
     }
 
     /**
-     * Reads a single char from the source and advances #pos by one
+     * Reads a single char from the source and advances _pos by one
+     * @private
      * @returns {string}
      */
     readChar() {
@@ -234,6 +262,7 @@ export class Tokenizer {
     }
 
     /**
+     * @private
      * @returns {string}
      */
     peekChar() {
@@ -242,6 +271,7 @@ export class Tokenizer {
 
     /**
      * Decreases source index pos by one
+     * @private
      */
     unreadChar() {
         this._sourceIndex.unreadChar()
@@ -249,6 +279,7 @@ export class Tokenizer {
 
     /**
      * Start reading precisely one token
+     * @private
      * @param {Site} site
      * @param {string} c
      */
@@ -290,6 +321,7 @@ export class Tokenizer {
     /**
      * Reads one word token.
      * Immediately turns "true" or "false" into a BoolLiteral instead of keeping it as Word
+     * @private
      * @param {Site} site
      * @param {string} c0 - first character
      */
@@ -312,15 +344,16 @@ export class Tokenizer {
         const wordSite = this.rangeSite(site)
 
         if (value == "true" || value == "false") {
-            this.pushToken(BoolLiteral.fromString(value, wordSite))
+            this.pushToken(makeBoolLiteral({ value, site: wordSite }))
         } else {
-            this.pushToken(new Word(value, wordSite))
+            this.pushToken(makeWord({ value, site: wordSite }))
         }
     }
 
     /**
      * Reads and discards a comment if current '/' char is followed by '/' or '*'.
-     * Otherwise pushes Symbol('/') onto #ts
+     * Otherwise pushes Symbol('/') onto _tokens
+     * @private
      * @param {Site} site
      */
     // comments are discarded
@@ -328,19 +361,20 @@ export class Tokenizer {
         let c = this.readChar()
 
         if (c == "\0") {
-            this.pushToken(new SymbolToken("/", site))
+            this.pushToken(makeSymbolToken({ value: "/", site }))
         } else if (c == "/") {
             this.readSingleLineComment(site)
         } else if (c == "*") {
             this.readMultiLineComment(site)
         } else {
-            this.pushToken(new SymbolToken("/", site))
+            this.pushToken(makeSymbolToken({ value: "/", site }))
             this.unreadChar()
         }
     }
 
     /**
      * Reads and discards a single line comment (from '//' to end-of-line)
+     * @private
      * @param {Site} site
      */
     readSingleLineComment(site) {
@@ -352,13 +386,19 @@ export class Tokenizer {
             chars.push(c)
         }
 
-        if (this.preserveComments) {
-            this.pushToken(new Comment(chars.join(""), this.rangeSite(site)))
+        if (this._preserveComments) {
+            this.pushToken(
+                makeComment({
+                    value: chars.join(""),
+                    site: this.rangeSite(site)
+                })
+            )
         }
     }
 
     /**
      * Reads and discards a multi-line comment (from '/' '*' to '*' '/')
+     * @private
      * @param {Site} site
      */
     readMultiLineComment(site) {
@@ -382,20 +422,26 @@ export class Tokenizer {
             }
         }
 
-        if (this.preserveComments) {
-            this.pushToken(new Comment(chars.join(""), this.rangeSite(site)))
+        if (this._preserveComments) {
+            this.pushToken(
+                makeComment({
+                    value: chars.join(""),
+                    site: this.rangeSite(site)
+                })
+            )
         }
     }
 
     /**
-     * REads a literal integer
+     * Reads a literal integer
+     * @private
      * @param {Site} site
      */
     readSpecialInteger(site) {
         let c = this.readChar()
 
         if (c == "\0") {
-            this.pushToken(new IntLiteral(0n, site))
+            this.pushToken(makeIntLiteral({ value: 0n, site }))
         } else if (c == "b") {
             this.readBinaryInteger(site)
         } else if (c == "o") {
@@ -405,20 +451,21 @@ export class Tokenizer {
         } else if ((c >= "A" && c <= "Z") || (c >= "a" && c <= "z")) {
             this.addSyntaxError(site, `bad literal integer type 0${c}`)
         } else if (c >= "0" && c <= "9") {
-            if (this.allowLeadingZeroes) {
+            if (this._allowLeadingZeroes) {
                 this.readDecimal(site, c)
             } else {
                 this.addSyntaxError(site, "unexpected leading 0")
             }
-        } else if (c == "." && this.tokenizeReal) {
+        } else if (c == "." && this._tokenizeReal) {
             this.readFixedPoint(site, ["0"])
         } else {
-            this.pushToken(new IntLiteral(0n, site))
+            this.pushToken(makeIntLiteral({ value: 0n, site }))
             this.unreadChar()
         }
     }
 
     /**
+     * @private
      * @param {Site} site
      */
     readBinaryInteger(site) {
@@ -426,6 +473,7 @@ export class Tokenizer {
     }
 
     /**
+     * @private
      * @param {Site} site
      */
     readOctalInteger(site) {
@@ -433,6 +481,7 @@ export class Tokenizer {
     }
 
     /**
+     * @private
      * @param {Site} site
      */
     readHexInteger(site) {
@@ -444,6 +493,7 @@ export class Tokenizer {
     }
 
     /**
+     * @private
      * @param {Site} site
      * @param {string[]} chars
      * @param {boolean} reverse
@@ -481,6 +531,7 @@ export class Tokenizer {
     }
 
     /**
+     * @private
      * @param {Site} site
      * @param {string} c0 - first character
      */
@@ -504,7 +555,7 @@ export class Tokenizer {
                         this.rangeSite(site),
                         "invalid syntax for decimal integer literal"
                     )
-                } else if (c == "." && this.tokenizeReal) {
+                } else if (c == "." && this._tokenizeReal) {
                     const cf = this.peekChar()
 
                     if (cf >= "0" && cf <= "9") {
@@ -525,14 +576,15 @@ export class Tokenizer {
         chars = this.assertCorrectDecimalUnderscores(intSite, chars, true)
 
         this.pushToken(
-            new IntLiteral(
-                BigInt(chars.filter((c) => c != "_").join("")),
-                intSite
-            )
+            makeIntLiteral({
+                value: BigInt(chars.filter((c) => c != "_").join("")),
+                site: intSite
+            })
         )
     }
 
     /**
+     * @private
      * @param {Site} site
      * @param {string} prefix
      * @param {(c: string) => boolean} valid - checks if character is valid as part of the radix
@@ -574,14 +626,15 @@ export class Tokenizer {
         }
 
         this.pushToken(
-            new IntLiteral(
-                BigInt(prefix + chars.join("")),
-                this.rangeSite(site)
-            )
+            makeIntLiteral({
+                value: BigInt(prefix + chars.join("")),
+                site: this.rangeSite(site)
+            })
         )
     }
 
     /**
+     * @private
      * @param {Site} site
      * @param {string[]} leading
      */
@@ -614,28 +667,29 @@ export class Tokenizer {
             false
         )
 
-        if (trailing.length > this.realPrecision) {
+        if (trailing.length > this._realPrecision) {
             this.addSyntaxError(
                 tokenSite,
-                `literal real decimal places overflow (max ${this.realPrecision} supported, but ${trailing.length} specified)`
+                `literal real decimal places overflow (max ${this._realPrecision} supported, but ${trailing.length} specified)`
             )
-            trailing.splice(this.realPrecision)
+            trailing.splice(this._realPrecision)
         }
 
-        while (trailing.length < this.realPrecision) {
+        while (trailing.length < this._realPrecision) {
             trailing.push("0")
         }
 
         this.pushToken(
-            new RealLiteral(
-                BigInt(leading.concat(trailing).join("")),
-                tokenSite
-            )
+            makeRealLiteral({
+                value: BigInt(leading.concat(trailing).join("")),
+                site: tokenSite
+            })
         )
     }
 
     /**
      * Reads literal hexadecimal representation of ByteArray
+     * @private
      * @param {Site} site
      */
     readByteArray(site) {
@@ -660,11 +714,14 @@ export class Tokenizer {
 
         let bytes = hexToBytes(chars.join(""))
 
-        this.pushToken(new ByteArrayLiteral(bytes, this.rangeSite(site)))
+        this.pushToken(
+            makeByteArrayLiteral({ value: bytes, site: this.rangeSite(site) })
+        )
     }
 
     /**
      * Reads literal Utf8 string and immediately encodes it as a ByteArray
+     * @private
      * @param {Site} site
      */
     readMaybeUtf8ByteArray(site) {
@@ -674,7 +731,10 @@ export class Tokenizer {
             const s = this.readStringInternal(site)
 
             this.pushToken(
-                new ByteArrayLiteral(encodeUtf8(s), this.rangeSite(site))
+                makeByteArrayLiteral({
+                    value: encodeUtf8(s),
+                    site: this.rangeSite(site)
+                })
             )
         } else {
             this.unreadChar()
@@ -746,16 +806,20 @@ export class Tokenizer {
     /**
      * Reads literal string delimited by double quotes.
      * Allows for three escape character: '\\', '\n' and '\t'
+     * @private
      * @param {Site} site
      */
     readString(site) {
         const s = this.readStringInternal(site)
 
-        this.pushToken(new StringLiteral(s, this.rangeSite(site)))
+        this.pushToken(
+            makeStringLiteral({ value: s, site: this.rangeSite(site) })
+        )
     }
 
     /**
      * Reads single or double character symbols
+     * @private
      * @param {Site} site
      * @param {string} c0 - first character
      */
@@ -793,14 +857,20 @@ export class Tokenizer {
             parseSecondChar(">")
         }
 
-        this.pushToken(new SymbolToken(chars.join(""), this.rangeSite(site)))
+        this.pushToken(
+            makeSymbolToken({
+                value: chars.join(""),
+                site: this.rangeSite(site)
+            })
+        )
     }
 
     /**
      * Separates tokens in fields (separted by commas)
-     * @param {SymbolTokenI<GroupKind>} open
+     * @private
+     * @param {SymbolToken<GroupKind>} open
      * @param {Token[]} ts
-     * @returns {TokenGroupI}
+     * @returns {TokenGroup}
      */
     buildGroup(open, ts) {
         /**
@@ -828,12 +898,12 @@ export class Tokenizer {
         while (prev && t) {
             endSite = t.site
 
-            if (!(t.kind == "symbol" && t.value == Group.otherSymbol(prev))) {
+            if (!(t.kind == "symbol" && t.value == getOtherGroupSymbol(prev))) {
                 stack.push(prev)
 
-                if (t.kind == "symbol" && Group.isCloseSymbol(t)) {
+                if (t.kind == "symbol" && isGroupCloseSymbol(t)) {
                     this.addSyntaxError(t.site, `unmatched '${t.value}'`)
-                } else if (t.kind == "symbol" && Group.isOpenSymbol(t)) {
+                } else if (t.kind == "symbol" && isGroupOpenSymbol(t)) {
                     stack.push(t)
                     curField.push(t)
                 } else if (
@@ -877,25 +947,30 @@ export class Tokenizer {
             )
         }
 
-        const groupSite = new TokenSite({
+        const groupSite = makeTokenSite({
             file: open.site.file,
             startLine: open.site.line,
             startColumn: open.site.column,
             endLine:
-                endSite && !TokenSite.isDummy(endSite)
+                endSite && !isDummySite(endSite)
                     ? endSite.line
-                    : !TokenSite.isDummy(open.site)
+                    : !isDummySite(open.site)
                       ? open.site.line
                       : undefined,
             endColumn:
-                endSite && !TokenSite.isDummy(endSite)
+                endSite && !isDummySite(endSite)
                     ? endSite.column
-                    : !TokenSite.isDummy(open.site)
+                    : !isDummySite(open.site)
                       ? open.site.column
                       : undefined
         })
 
-        const group = new Group(open.value, fields, separators, groupSite)
+        const group = makeGroup({
+            kind: open.value,
+            fields,
+            separators,
+            site: groupSite
+        })
         if (group.error) {
             this.addSyntaxError(group.site, group.error)
         }
@@ -905,6 +980,7 @@ export class Tokenizer {
     /**
      * Match group open with group close symbols in order to form groups.
      * This is recursively applied to nested groups.
+     * @private
      * @param {Token[]} ts
      * @returns {Token[]}
      */
@@ -920,32 +996,40 @@ export class Tokenizer {
         let current = []
 
         for (let t of ts) {
-            if (t.kind == "symbol" && Group.isOpenSymbol(t)) {
+            if (t.kind == "symbol" && isGroupOpenSymbol(t)) {
                 stack.push(current)
 
                 current = [t]
-            } else if (t.kind == "symbol" && Group.isCloseSymbol(t)) {
-                let open = SymbolToken.from(current.shift())
+            } else if (t.kind == "symbol" && isGroupCloseSymbol(t)) {
+                let open = current.shift()
 
-                if (!open || !t.matches(Group.otherSymbol(open))) {
+                if (
+                    !open ||
+                    (open.kind == "symbol" &&
+                        !t.matches(getOtherGroupSymbol(open)))
+                ) {
                     if (open) {
                         this.addSyntaxError(
                             open.site,
                             `unmatched '${open.value}'`
                         )
                         // mutate to expected open SymbolToken
-                        open.value = Group.otherSymbol(t)
+                        open.value = getOtherGroupSymbol(t)
                     } else {
-                        open = new SymbolToken(
-                            Group.otherSymbol(t),
-                            current[0]?.site ?? t.site
-                        )
+                        open = makeSymbolToken({
+                            value: getOtherGroupSymbol(t),
+                            site: current[0]?.site ?? t.site
+                        })
                     }
 
                     this.addSyntaxError(t.site, `unmatched '${t.value}'`)
                 }
 
-                if (!Group.isOpenSymbol(open)) {
+                if (
+                    !open ||
+                    open.kind != "symbol" ||
+                    !isGroupOpenSymbol(open)
+                ) {
                     throw new Error("unexpected")
                 }
 

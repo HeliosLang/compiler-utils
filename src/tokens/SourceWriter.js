@@ -4,9 +4,30 @@
 
 /**
  * Used for accurate formatting
+ * @typedef {{
+ *   finalize(): string
+ *   write(s: string): void
+ *   writeToken(token: Token): void
+ * }} SourceWriter
  */
-export class SourceWriter {
+
+/**
+ * @param {{line?: number, column?: number}} args
+ * @returns {SourceWriter}
+ */
+export function makeSourceWriter(args = {}) {
+    return new SourceWriterImpl({
+        line: args.line ?? 0,
+        column: args.column ?? 0
+    })
+}
+
+/**
+ * @implements {SourceWriter}
+ */
+class SourceWriterImpl {
     /**
+     * @private
      * @type {string[]}
      */
     parts

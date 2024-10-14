@@ -1,26 +1,23 @@
 import { deepEqual, strictEqual, throws } from "node:assert"
 import { describe, it } from "node:test"
 import { hexToBytes } from "@helios-lang/codec-utils"
-import { ByteArrayLiteral } from "./ByteArrayLiteral.js"
-import { IntLiteral } from "./IntLiteral.js"
-import { Source } from "./Source.js"
-import { Tokenizer } from "./Tokenizer.js"
+import { makeSource } from "./Source.js"
+import { makeTokenizer } from "./Tokenizer.js"
 
-describe(Tokenizer.name, () => {
+describe("Tokenizer", () => {
     it("tokenizes #54686543616B654973414C6965 as single ByteArrayLiteral", () => {
-        const tokenizer = new Tokenizer(
-            new Source("#54686543616B654973414C6965"),
-            {}
-        )
+        const tokenizer = makeTokenizer({
+            source: makeSource({ content: "#54686543616B654973414C6965" })
+        })
 
         const tokens = tokenizer.tokenize()
         tokenizer.errors.throw()
 
         strictEqual(tokens.length, 1)
         const token = tokens[0]
-        strictEqual(token instanceof ByteArrayLiteral, true)
+        strictEqual(token.kind, "bytes")
 
-        if (token instanceof ByteArrayLiteral) {
+        if (token.kind == "bytes") {
             deepEqual(token.value, hexToBytes("54686543616B654973414C6965"))
         } else {
             throw new Error("unexpected")
@@ -28,19 +25,21 @@ describe(Tokenizer.name, () => {
     })
 
     it("tokenizes 000000000000000000000000000000000000012345 as 12345 if leading zeroes is allowed", () => {
-        const tokenizer = new Tokenizer(
-            new Source("000000000000000000000000000000000000012345"),
-            { allowLeadingZeroes: true }
-        )
+        const tokenizer = makeTokenizer({
+            source: makeSource({
+                content: "000000000000000000000000000000000000012345"
+            }),
+            options: { allowLeadingZeroes: true }
+        })
 
         const tokens = tokenizer.tokenize()
         tokenizer.errors.throw()
 
         strictEqual(tokens.length, 1)
         const token = tokens[0]
-        strictEqual(token instanceof IntLiteral, true)
+        strictEqual(token.kind, "int")
 
-        if (token instanceof IntLiteral) {
+        if (token.kind == "int") {
             deepEqual(token.value, 12345)
         } else {
             throw new Error("unexpected")
@@ -48,10 +47,12 @@ describe(Tokenizer.name, () => {
     })
 
     it("fails to tokenize 000000000000000000000000000000000000012345 is leading zeroes isn't allowed", () => {
-        const tokenizer = new Tokenizer(
-            new Source("000000000000000000000000000000000000012345"),
-            { allowLeadingZeroes: false }
-        )
+        const tokenizer = makeTokenizer({
+            source: makeSource({
+                content: "000000000000000000000000000000000000012345"
+            }),
+            options: { allowLeadingZeroes: false }
+        })
 
         throws(() => {
             tokenizer.tokenize()

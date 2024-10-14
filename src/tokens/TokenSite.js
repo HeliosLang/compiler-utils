@@ -20,9 +20,17 @@ const DUMMY_FILE_NAME = "::internal"
  */
 
 /**
+ * @param {TokenSiteProps} props
+ * @returns {Site}
+ */
+export function makeTokenSite(props) {
+    return new TokenSite(props)
+}
+
+/**
  * @implements {Site}
  */
-export class TokenSite {
+class TokenSite {
     /**
      * @readonly
      * @type {string}
@@ -86,88 +94,6 @@ export class TokenSite {
     }
 
     /**
-     * In some cases it is easier to work with a dummy TokenSite than Option<TokenSite>
-     * @returns {TokenSite}
-     */
-    static dummy() {
-        return new TokenSite({
-            file: DUMMY_FILE_NAME,
-            startLine: 0,
-            startColumn: 0
-        })
-    }
-
-    /**
-     * Converts something that implements the Site type to a TokenSite instance
-     * @param {Site} site
-     * @returns {TokenSite}
-     */
-    static fromSite(site) {
-        if (site instanceof TokenSite) {
-            return site
-        } else {
-            return new TokenSite({
-                file: site.file,
-                startLine: site.line,
-                startColumn: site.column,
-                endLine: site.end?.line,
-                endColumn: site.end?.column,
-                alias: site.alias
-            })
-        }
-    }
-
-    /**
-     * @param {Site} site
-     * @returns {boolean}
-     */
-    static isDummy(site) {
-        return (
-            site.file == DUMMY_FILE_NAME && site.line == 0 && site.column == 0
-        )
-    }
-
-    /**
-     * @param {Site} a
-     * @param {Site} b
-     * @returns {TokenSite}
-     */
-    static merge(a, b) {
-        if (TokenSite.isDummy(b)) {
-            return TokenSite.fromSite(a)
-        } else if (TokenSite.isDummy(a)) {
-            return TokenSite.dummy()
-        }
-
-        const file = a.file
-
-        let startLine = a.line
-        let startColumn = a.column
-
-        if (comparePos(a, b) > 0) {
-            startLine = b.line
-            startColumn = b.column
-        }
-
-        let endLine = a.end?.line ?? a.line
-        let endColumn = a.end?.column ?? a.column
-
-        if (comparePos(a.end ?? a, b.end ?? b) > 0) {
-            endLine = b.end?.line ?? b.line
-            endColumn = b.end?.column ?? b.column
-        }
-
-        // alias is lost
-        return new TokenSite({
-            file,
-            startLine,
-            startColumn,
-            endLine,
-            endColumn
-        })
-    }
-
-    /**
      * @type {number}
      */
     get line() {
@@ -213,4 +139,63 @@ export class TokenSite {
             alias
         })
     }
+}
+
+/**
+ * @param {Site} site
+ * @returns {boolean}
+ */
+export function isDummySite(site) {
+    return site.file == DUMMY_FILE_NAME && site.line == 0 && site.column == 0
+}
+
+/**
+ * @returns {Site}
+ */
+export function makeDummySite() {
+    return new TokenSite({
+        file: DUMMY_FILE_NAME,
+        startLine: 0,
+        startColumn: 0
+    })
+}
+
+/**
+ * @param {Site} a
+ * @param {Site} b
+ * @returns {Site}
+ */
+export function mergeSites(a, b) {
+    if (isDummySite(b)) {
+        return a
+    } else if (isDummySite(a)) {
+        return makeDummySite()
+    }
+
+    const file = a.file
+
+    let startLine = a.line
+    let startColumn = a.column
+
+    if (comparePos(a, b) > 0) {
+        startLine = b.line
+        startColumn = b.column
+    }
+
+    let endLine = a.end?.line ?? a.line
+    let endColumn = a.end?.column ?? a.column
+
+    if (comparePos(a.end ?? a, b.end ?? b) > 0) {
+        endLine = b.end?.line ?? b.line
+        endColumn = b.end?.column ?? b.column
+    }
+
+    // alias is lost
+    return new TokenSite({
+        file,
+        startLine,
+        startColumn,
+        endLine,
+        endColumn
+    })
 }

@@ -1,12 +1,12 @@
 import { expectSome, isNone, isSome, None } from "@helios-lang/type-utils"
-import { SourceWriter } from "./SourceWriter.js"
-import { SymbolToken } from "./SymbolToken.js"
-import { TokenSite } from "./TokenSite.js"
+import { makeSourceWriter } from "./SourceWriter.js"
+import { makeSymbolToken } from "./SymbolToken.js"
+import { makeDummySite, makeTokenSite } from "./TokenSite.js"
 import { GROUP_OPEN_SYMBOLS, GROUP_CLOSE_SYMBOLS } from "./Token.js"
 
 /**
  * @template {string} [T=string]
- * @typedef {import("./Token.js").SymbolTokenI<T>} SymbolTokenI
+ * @typedef {import("./Token.js").SymbolToken<T>} SymbolToken
  */
 
 /**
@@ -25,15 +25,34 @@ import { GROUP_OPEN_SYMBOLS, GROUP_CLOSE_SYMBOLS } from "./Token.js"
  * @template {TokensLike} [F=Token[]]
  * @typedef {CommonGroupProps & {
  *   fields: F[]
- * }} GenericGroupI
+ * }} GenericGroup
  */
+
+/**
+ * @template {TokensLike} [F=Token[]]
+ * @param {{
+ *   kind: GroupKind
+ *   fields: F[]
+ *   separators: SymbolToken[]
+ *   site?: Site
+ * }} args
+ * @returns {GenericGroup<F>}
+ */
+export function makeGroup(args) {
+    return new GenericGroupImpl(
+        args.kind,
+        args.fields,
+        args.separators,
+        args.site ?? makeDummySite()
+    )
+}
 
 /**
  * Group token can '(...)', '[...]' or '{...}' and can contain comma separated fields.
  * @template {TokensLike} [F=Token[]] - each field be either a list of tokens or a TokenReader
- * @implements {GenericGroupI<F>}
+ * @implements {GenericGroup<F>}
  */
-export class Group {
+class GenericGroupImpl {
     /**
      * "(", "[" or "{"
      * @readonly
@@ -49,7 +68,7 @@ export class Group {
 
     /**
      * @readonly
-     * @type {SymbolTokenI[]}
+     * @type {SymbolToken[]}
      */
     separators
 
@@ -68,10 +87,10 @@ export class Group {
     /**
      * @param {GroupKind} kind - "(", "[" or "{"
      * @param {F[]} fields
-     * @param {SymbolTokenI[]} separators - useful for more accurate errors
+     * @param {SymbolToken[]} separators - useful for more accurate errors
      * @param {Site} site - end site must be supplied
      */
-    constructor(kind, fields, separators, site = TokenSite.dummy()) {
+    constructor(kind, fields, separators, site) {
         const expectCount = Math.max(fields.length - 1, 0)
         this.error = null
         if (separators.length > expectCount) {
@@ -90,35 +109,6 @@ export class Group {
         this.fields = fields // list of lists of tokens
         this.separators = separators
         this.site = site
-    }
-
-    /**
-     * @param {Option<Token>} token
-     * @returns {Option<Group<Token[]>>}
-     */
-    static from(token) {
-        if (token instanceof Group) {
-            return token
-        } else if (
-            isSome(token) &&
-            (token.kind == "(" || token.kind == "[" || token.kind == "{")
-        ) {
-            return new Group(
-                token.kind,
-                token.fields,
-                token.separators,
-                token.site
-            )
-        }
-        return token instanceof Group ? token : None
-    }
-
-    /**
-     * @param {string} kind
-     * @returns {boolean}
-     */
-    isKind(kind) {
-        return this.kind == kind
     }
 
     /**
@@ -142,12 +132,12 @@ export class Group {
      */
     toString(preserveWhitespace = false) {
         if (preserveWhitespace) {
-            const w = new SourceWriter({
+            const w = makeSourceWriter({
                 line: this.site.line,
                 column: this.site.column
             })
 
-            w.writeToken(new SymbolToken(this.kind, this.site))
+            w.writeToken(makeSymbolToken({ value: this.kind, site: this.site }))
 
             for (let i = 0; i < this.fields.length; i++) {
                 const f = this.fields[i]
@@ -164,14 +154,14 @@ export class Group {
             }
 
             w.writeToken(
-                new SymbolToken(
-                    Group.otherSymbol(this.kind),
-                    new TokenSite({
+                makeSymbolToken({
+                    value: getOtherGroupSymbol(this.kind),
+                    site: makeTokenSite({
                         file: this.site.file,
                         startLine: expectSome(this.site.end?.line),
                         startColumn: expectSome(this.site.end?.column)
                     })
-                )
+                })
             )
             return w.finalize()
         } else {
@@ -187,74 +177,63 @@ export class Group {
                 }
             }
 
-            s += parts.join(", ") + Group.otherSymbol(this.kind)
+            s += parts.join(", ") + getOtherGroupSymbol(this.kind)
 
             return s
         }
     }
+}
 
-    /**
-     * @param {SymbolTokenI} t
-     * @returns {t is SymbolTokenI<GroupKind>}
-     */
-    static isOpenSymbol(t) {
-        if (t.kind == "symbol") {
-            return t.matches(GROUP_OPEN_SYMBOLS)
-        } else {
-            return false
-        }
+/**
+ * @param {SymbolToken} t
+ * @returns {t is SymbolToken<GroupKind>}
+ */
+export function isGroupOpenSymbol(t) {
+    if (t.kind == "symbol") {
+        return t.matches(GROUP_OPEN_SYMBOLS)
+    } else {
+        return false
+    }
+}
+
+/**
+ * @param {SymbolToken} t
+ * @returns {t is SymbolToken<"]" | ")" | "}">}
+ */
+export function isGroupCloseSymbol(t) {
+    if (t.kind == "symbol") {
+        return t.matches(GROUP_CLOSE_SYMBOLS)
+    } else {
+        return false
+    }
+}
+
+/**
+ * Returns the corresponding closing bracket, parenthesis or brace.
+ * Throws an error if not a group symbol.
+ * @example
+ * Group.matchSymbol("(") == ")"
+ * @param {string | SymbolToken} t
+ * @returns {GroupKind | GroupCloseKind}
+ */
+export function getOtherGroupSymbol(t) {
+    if (typeof t != "string") {
+        t = t.value
     }
 
-    /**
-     * @param {SymbolTokenI} t
-     * @returns {t is SymbolTokenI<"]" | ")" | "}">}
-     */
-    static isCloseSymbol(t) {
-        if (t.kind == "symbol") {
-            return t.matches(GROUP_CLOSE_SYMBOLS)
-        } else {
-            return false
-        }
-    }
-
-    /**
-     * Returns the corresponding closing bracket, parenthesis or brace.
-     * Throws an error if not a group symbol.
-     * @example
-     * Group.matchSymbol("(") == ")"
-     * @param {string | SymbolTokenI} t
-     * @returns {GroupKind | GroupCloseKind}
-     */
-    static otherSymbol(t) {
-        if (typeof t != "string") {
-            t = t.value
-        }
-
-        if (t == "{") {
-            return "}"
-        } else if (t == "[") {
-            return "]"
-        } else if (t == "(") {
-            return ")"
-        } else if (t == "}") {
-            return "{"
-        } else if (t == "]") {
-            return "["
-        } else if (t == ")") {
-            return "("
-        } else {
-            throw new Error("not a group symbol")
-        }
-    }
-
-    /**
-     * Finds the index of first Group(type) in list of tokens
-     * Returns -1 if none found.
-     * @param {Token[]} ts
-     * @param {string} kind
-     * @returns {number}
-     */
-    static find(ts, kind) {
-        return ts.findIndex((item) => Group.from(item)?.isKind(kind))
+    if (t == "{") {
+        return "}"
+    } else if (t == "[") {
+        return "]"
+    } else if (t == "(") {
+        return ")"
+    } else if (t == "}") {
+        return "{"
+    } else if (t == "]") {
+        return "["
+    } else if (t == ")") {
+        return "("
+    } else {
+        throw new Error("not a group symbol")
     }
 }

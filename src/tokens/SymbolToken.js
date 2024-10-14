@@ -1,9 +1,8 @@
-import { isSome, None } from "@helios-lang/type-utils"
-import { TokenSite } from "./TokenSite.js"
+import { makeDummySite } from "./TokenSite.js"
 
 /**
  * @template {string} [T=string]
- * @typedef {import("./Token.js").SymbolTokenI<T>} SymbolTokenI
+ * @typedef {import("./Token.js").SymbolToken<T>} SymbolToken
  */
 
 /**
@@ -12,11 +11,23 @@ import { TokenSite } from "./TokenSite.js"
  */
 
 /**
+ * @template {string} [T=string]
+ * @param {{
+ *   value: T
+ *   site?: Site
+ * }} args
+ * @returns {SymbolToken}
+ */
+export function makeSymbolToken(args) {
+    return new SymbolTokenImpl(args.value, args.site ?? makeDummySite())
+}
+
+/**
  * Symbol token represent anything non alphanumeric
  * @template {string} [T=string]
- * @implements {SymbolTokenI<T>}
+ * @implements {SymbolToken<T>}
  */
-export class SymbolToken {
+class SymbolTokenImpl {
     /**
      * Writing is allowed as it is the easiest to change to an expected symbol in case of an error
      * @type {T}
@@ -33,51 +44,9 @@ export class SymbolToken {
      * @param {T} value
      * @param {Site} site
      */
-    constructor(value, site = TokenSite.dummy()) {
+    constructor(value, site) {
         this.value = value
         this.site = site
-    }
-
-    /**
-     * @param {Option<Token>} token
-     * @returns {Option<SymbolToken>}
-     */
-    static from(token) {
-        if (token instanceof SymbolToken) {
-            return token
-        } else if (isSome(token) && token.kind == "symbol") {
-            return new SymbolToken(token.value, token.site)
-        } else {
-            return None
-        }
-    }
-
-    /**
-     * Finds the index of the first Symbol(value) in a list of tokens.
-     * Returns -1 if none found.
-     * @param {Token[]} ts
-     * @param {string | ReadonlyArray<string>} value
-     * @returns {number}
-     */
-    static find(ts, value) {
-        return ts.findIndex((item) => SymbolToken.from(item)?.matches(value))
-    }
-
-    /**
-     * Finds the index of the last Symbol(value) in a list of tokens.
-     * Returns -1 if none found.
-     * @param {Token[]} ts
-     * @param {string | ReadonlyArray<string>} value
-     * @returns {number}
-     */
-    static findLast(ts, value) {
-        for (let i = ts.length - 1; i >= 0; i--) {
-            if (SymbolToken.from(ts[i])?.matches(value)) {
-                return i
-            }
-        }
-
-        return -1
     }
 
     /**

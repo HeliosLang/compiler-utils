@@ -1,17 +1,24 @@
-import { isSome, None } from "@helios-lang/type-utils"
-import { TokenSite } from "./TokenSite.js"
+import { makeDummySite } from "./TokenSite.js"
 
 /**
  * @typedef {import("../errors/index.js").Site} Site
  * @typedef {import("./Token.js").Token} Token
- * @typedef {import("./Token.js").WordI} WordI
+ * @typedef {import("./Token.js").Word} Word
  */
 
 /**
- * A Word token represents a token that matches /[A-Za-z_][A-Za-z_0-9]/
- * @implements {WordI}
+ * @param {{value: string, site?: Site}} args
+ * @returns {Word}
  */
-export class Word {
+export function makeWord(args) {
+    return new WordImpl(args.value, args.site ?? makeDummySite())
+}
+
+/**
+ * A Word token represents a token that matches /[A-Za-z_][A-Za-z_0-9]/
+ * @implements {Word}
+ */
+class WordImpl {
     /**
      * @readonly
      * @type {string}
@@ -28,23 +35,9 @@ export class Word {
      * @param {Site} site
      * @param {string} value
      */
-    constructor(value, site = TokenSite.dummy()) {
+    constructor(value, site) {
         this.value = value
         this.site = site
-    }
-
-    /**
-     * @param {Option<Token>} token
-     * @returns {Option<Word>}
-     */
-    static from(token) {
-        if (token instanceof Word) {
-            return token
-        } else if (isSome(token) && token.kind == "word") {
-            return new Word(token.value, token.site)
-        } else {
-            return None
-        }
     }
 
     /**

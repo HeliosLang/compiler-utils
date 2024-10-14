@@ -16,7 +16,7 @@ export {}
  *   kind: "bool"
  *   value: boolean
  *   isEqual(other: Token): boolean
- * }} BoolLiteralI
+ * }} BoolLiteral
  */
 
 /**
@@ -24,7 +24,7 @@ export {}
  *   kind: "bytes"
  *   value: number[]
  *   isEqual(other: Token): boolean
- * }} ByteArrayLiteralI
+ * }} ByteArrayLiteral
  */
 
 /**
@@ -32,7 +32,7 @@ export {}
  *   kind: "comment"
  *   value: string
  *   isEqual(other: Token): boolean
- * }} CommentI
+ * }} Comment
  */
 
 export const GROUP_OPEN_SYMBOLS = /** @type {const} */ (["(", "[", "{"])
@@ -49,9 +49,8 @@ export const GROUP_CLOSE_SYMBOLS = /** @type {const} */ ([")", "]", "}"])
 /**
  * @typedef {CommonTokenProps & {
  *   kind: GroupKind
- *   separators: SymbolTokenI[]
+ *   separators: SymbolToken[]
  *   error: string | null
- *   isKind(kind: string): boolean
  *   isGroup(kind?: Option<string>, nFields?: Option<number>): boolean
  * }} CommonGroupProps
  */
@@ -59,7 +58,7 @@ export const GROUP_CLOSE_SYMBOLS = /** @type {const} */ ([")", "]", "}"])
 /**
  * @typedef {CommonGroupProps & {
  *   fields: Token[][]
- * }} TokenGroupI
+ * }} TokenGroup
  */
 
 /**
@@ -67,7 +66,7 @@ export const GROUP_CLOSE_SYMBOLS = /** @type {const} */ ([")", "]", "}"])
  *   kind: "int",
  *   value: bigint
  *   isEqual(other: Token): boolean
- * }} IntLiteralI
+ * }} IntLiteral
  */
 
 /**
@@ -75,7 +74,7 @@ export const GROUP_CLOSE_SYMBOLS = /** @type {const} */ ([")", "]", "}"])
  *   kind: "real"
  *   value: bigint
  *   isEqual(other: Token): boolean
- * }} RealLiteralI
+ * }} RealLiteral
  */
 
 /**
@@ -83,7 +82,7 @@ export const GROUP_CLOSE_SYMBOLS = /** @type {const} */ ([")", "]", "}"])
  *   kind: "string"
  *   value: string
  *   isEqual(other: Token): boolean
- * }} StringLiteralI
+ * }} StringLiteral
  */
 
 /**
@@ -93,7 +92,7 @@ export const GROUP_CLOSE_SYMBOLS = /** @type {const} */ ([")", "]", "}"])
  *   value: T
  *   isEqual(other: Token): boolean
  *   matches(value: string | ReadonlyArray<string>): boolean
- * }} SymbolTokenI
+ * }} SymbolToken
  */
 
 /**
@@ -104,19 +103,27 @@ export const GROUP_CLOSE_SYMBOLS = /** @type {const} */ ([")", "]", "}"])
  *   isInternal(): boolean
  *   isKeyword(): boolean
  *   matches(value: string | string[]): boolean
- * }} WordI
+ * }} Word
  */
 
 /**
  * @typedef {(
- *   BoolLiteralI
- *   | ByteArrayLiteralI
- *   | CommentI
- *   | TokenGroupI
- *   | IntLiteralI
- *   | RealLiteralI
- *   | StringLiteralI
- *   | SymbolTokenI
- *   | WordI
+ *   BoolLiteral
+ *   | ByteArrayLiteral
+ *   | Comment
+ *   | TokenGroup
+ *   | IntLiteral
+ *   | RealLiteral
+ *   | StringLiteral
+ *   | SymbolToken
+ *   | Word
  * )} Token
  */
+
+/**
+ * @param {Token} t
+ * @returns {t is TokenGroup}
+ */
+export function isGroup(t) {
+    return t.kind == "(" || t.kind == "{" || t.kind == "["
+}

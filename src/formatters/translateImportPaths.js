@@ -1,13 +1,6 @@
 import { None } from "@helios-lang/type-utils"
-import {
-    Comment,
-    Group,
-    Source,
-    StringLiteral,
-    Tokenizer,
-    Word
-} from "../tokens/index.js"
-import { SourceWriter } from "../tokens/SourceWriter.js"
+import { makeSource, makeTokenizer, makeWord } from "../tokens/index.js"
+import { makeSourceWriter } from "../tokens/SourceWriter.js"
 
 /**
  * @typedef {import("../tokens/index.js").Token} Token
@@ -20,40 +13,37 @@ import { SourceWriter } from "../tokens/SourceWriter.js"
  * @returns {string}
  */
 export function translateImportPaths(raw, translator) {
-    const tokens = new Tokenizer(new Source(raw), {
-        preserveComments: true
+    const tokens = makeTokenizer({
+        source: makeSource({ content: raw }),
+        options: {
+            preserveComments: true
+        }
     }).tokenize()
-    const w = new SourceWriter()
+    const w = makeSourceWriter()
 
-    /**
-     * @type {Option<Token>}
-     */
-    let prev0 = None
-
-    /**
-     * @type {Option<Token>}
-     */
-    let prev1 = None
-
-    /**
-     * @type {Option<Token>}
-     */
-    let prev2 = None
+    let prev0 = /** @type {Option<Token>} */ (None)
+    let prev1 = /** @type {Option<Token>} */ (None)
+    let prev2 = /** @type {Option<Token>} */ (None)
 
     for (let t of tokens) {
-        const sl = StringLiteral.from(t)
+        const sl = t.kind == "string" ? t : None
+
         if (
-            Word.from(prev0)?.matches("import") &&
-            Group.from(prev1)?.isKind("{") &&
-            Word.from(prev2)?.matches("from") &&
+            prev0?.kind == "word" &&
+            prev0.matches("import") &&
+            prev1?.kind == "{" &&
+            prev2?.kind == "word" &&
+            prev2.matches("from") &&
             sl
         ) {
-            w.writeToken(new Word(translator(sl.value), sl.site))
+            w.writeToken(
+                makeWord({ value: translator(sl.value), site: sl.site })
+            )
         } else {
             w.writeToken(t)
         }
 
-        if (!Comment.from(t)) {
+        if (t.kind != "comment") {
             prev0 = prev1
             prev1 = prev2
             prev2 = t

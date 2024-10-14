@@ -1,8 +1,8 @@
-import { TokenSite } from "./TokenSite.js"
+import { makeDummySite } from "./TokenSite.js"
 
 /**
  * @typedef {import("../errors/index.js").Site} Site
- * @typedef {import("./Token.js").RealLiteralI} RealLiteralI
+ * @typedef {import("./Token.js").RealLiteral} RealLiteral
  * @typedef {import("./Token.js").Token} Token
  */
 
@@ -11,10 +11,29 @@ export const REAL_PRECISION = 6
 const REAL_FACTOR = 10n ** BigInt(REAL_PRECISION)
 
 /**
- * Fixed point number literal token
- * @implements {RealLiteralI}
+ * @param {{
+ *   value: bigint
+ *   site?: Site
+ * } | {
+ *   number: number
+ *   site?: Site
+ * }} args
+ * @returns {RealLiteral}
  */
-export class RealLiteral {
+export function makeRealLiteral(args) {
+    if ("number" in args) {
+        const n = BigInt(Math.round(args.number * Number(REAL_FACTOR)))
+        return new RealLiteralImpl(n, args.site ?? makeDummySite())
+    } else {
+        return new RealLiteralImpl(args.value, args.site ?? makeDummySite())
+    }
+}
+
+/**
+ * Fixed point number literal token
+ * @implements {RealLiteral}
+ */
+class RealLiteralImpl {
     /**
      * Includes decimals
      * @readonly
@@ -32,18 +51,9 @@ export class RealLiteral {
      * @param {bigint} value
      * @param {Site} site
      */
-    constructor(value, site = TokenSite.dummy()) {
+    constructor(value, site) {
         this.value = value
         this.site = site
-    }
-
-    /**
-     * @param {number} x
-     * @returns {RealLiteral}
-     */
-    static fromNumber(x, site = TokenSite.dummy()) {
-        const n = BigInt(Math.round(x * Number(REAL_FACTOR)))
-        return new RealLiteral(n, site)
     }
 
     /**

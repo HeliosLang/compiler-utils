@@ -1,12 +1,15 @@
-import { Source, StringLiteral, Tokenizer, Word } from "../tokens/index.js"
+import { makeSource, makeTokenizer } from "../tokens/index.js"
 
 /**
  * @param {string} src
  * @returns {[string, string]}
  */
 export function readHeader(src) {
-    const tokenizer = new Tokenizer(new Source(src), {
-        preserveComments: false
+    const tokenizer = makeTokenizer({
+        source: makeSource({ content: src }),
+        options: {
+            preserveComments: false
+        }
     })
 
     const gen = tokenizer.stream()
@@ -23,11 +26,13 @@ export function readHeader(src) {
         tokens.push(yielded.value)
     }
 
-    const purpose = Word.from(tokens[0])?.value ?? ""
+    const purpose = tokens[0]?.kind == "word" ? tokens[0].value : ""
     const name =
-        StringLiteral.from(tokens[1])?.value ??
-        Word.from(tokens[1])?.value ??
-        ""
+        tokens[1]?.kind == "string"
+            ? tokens[1]?.value
+            : tokens[1]?.kind == "word"
+              ? tokens[1]?.value
+              : ""
 
     return [purpose, name]
 }

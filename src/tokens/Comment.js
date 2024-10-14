@@ -1,15 +1,24 @@
-import { None } from "@helios-lang/type-utils"
-
 /**
  * @typedef {import("../errors/index.js").Site} Site
- * @typedef {import("./Token.js").CommentI} CommentI
+ * @typedef {import("./Token.js").Comment} Comment
  * @typedef {import("./Token.js").Token} Token
  */
 
 /**
- * @implements {CommentI}
+ * @param {{
+ *   value: string
+ *   site: Site
+ * }} args
+ * @returns {Comment}
  */
-export class Comment {
+export function makeComment(args) {
+    return new CommentImpl(args.value, args.site)
+}
+
+/**
+ * @implements {Comment}
+ */
+class CommentImpl {
     /**
      * @readonly
      * @type {string}
@@ -29,14 +38,6 @@ export class Comment {
     constructor(value, site) {
         this.value = value
         this.site = site
-    }
-
-    /**
-     * @param {any} token
-     * @returns {Option<Comment>}
-     */
-    static from(token) {
-        return token instanceof Comment ? token : None
     }
 
     /**
