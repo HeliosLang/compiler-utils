@@ -8,12 +8,7 @@ export {
     byteslit,
     group,
     intlit,
-    oneOf,
-    reallit,
-    strlit,
-    symbol,
-    wildcard,
-    word,
+    isDummySite,
     makeBoolLiteral,
     makeByteArrayLiteral,
     makeComment,
@@ -28,6 +23,12 @@ export {
     makeTokenReader,
     makeTokenSite,
     makeWord,
+    oneOf,
+    reallit,
+    strlit,
+    symbol,
+    wildcard,
+    word,
     REAL_PRECISION
 } from "./tokens/index.js"
 
