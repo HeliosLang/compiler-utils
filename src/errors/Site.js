@@ -11,7 +11,7 @@
  *   end?: Pos
  *   alias?: string
  *   toString(): string
- *   withAlias(alias: string): void
+ *   withAlias(alias: string): Site
  * }} Site
  */
 
