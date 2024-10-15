@@ -1,12 +1,57 @@
 /**
- * @typedef {import("./Site.js").Site} Site
+ * @import { CompilerError, CompilerErrorKind, Site } from "src/index.js"
  */
 
 /**
- * @typedef {"ReferenceError" | "SyntaxError" | "TypeError"} CompilerErrorKind
+ *
+ * @param {CompilerErrorKind} kind
+ * @param {Site} site
+ * @param {string} msg
+ * @returns {CompilerError}
  */
+function makeCompilerError(kind, site, msg) {
+    return new CompilerErrorImpl(kind, site, msg)
+}
 
-export class CompilerError extends Error {
+/**
+ * @param {Site} site
+ * @param {string} msg
+ * @returns {CompilerError}
+ */
+export function makeReferenceError(site, msg) {
+    return makeCompilerError("ReferenceError", site, msg)
+}
+
+/**
+ * @param {Site} site
+ * @param {string} msg
+ * @returns {CompilerError}
+ */
+export function makeSyntaxError(site, msg) {
+    return makeCompilerError("SyntaxError", site, msg)
+}
+
+/**
+ * @param {Site} site
+ * @param {string} msg
+ * @returns {CompilerError}
+ */
+export function makeTypeError(site, msg) {
+    return makeCompilerError("TypeError", site, msg)
+}
+
+/**
+ * @param {Error} err
+ * @returns {err is CompilerError}
+ */
+export function isCompilerError(err) {
+    return err instanceof CompilerErrorImpl
+}
+
+/**
+ * @implements {CompilerError}
+ */
+class CompilerErrorImpl extends Error {
     /**
      * @readonly
      * @type {CompilerErrorKind}
@@ -26,7 +71,7 @@ export class CompilerError extends Error {
     originalMessage
 
     /**
-     * @type {CompilerError[] | null}
+     * @type {CompilerError[] | undefined}
      */
     otherErrors
 
@@ -40,33 +85,13 @@ export class CompilerError extends Error {
         this.kind = kind
         this.site = site
         this.originalMessage = msg
-        this.otherErrors = null
+        this.otherErrors = undefined
     }
 
     /**
-     * @param {Site} site
-     * @param {string} msg
-     * @returns {CompilerError}
+     * @type {"CompilerError"}
      */
-    static reference(site, msg) {
-        return new CompilerError("ReferenceError", site, msg)
-    }
-
-    /**
-     * @param {Site} site
-     * @param {string} msg
-     * @returns {CompilerError}
-     */
-    static syntax(site, msg) {
-        return new CompilerError("SyntaxError", site, msg)
-    }
-
-    /**
-     * @param {Site} site
-     * @param {string} msg
-     * @returns {CompilerError}
-     */
-    static type(site, msg) {
-        return new CompilerError("TypeError", site, msg)
+    get name() {
+        return "CompilerError"
     }
 }

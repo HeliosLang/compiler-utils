@@ -1,25 +1,19 @@
 import { makeDummySite } from "./TokenSite.js"
 
 /**
- * @template {string} [T=string]
- * @typedef {import("./Token.js").SymbolToken<T>} SymbolToken
- */
-
-/**
- * @typedef {import("../errors/Site.js").Site} Site
- * @typedef {import("./Token.js").Token} Token
+ * @import { Site, SymbolToken, Token } from "src/index.js"
  */
 
 /**
  * @template {string} [T=string]
- * @param {{
- *   value: T
- *   site?: Site
- * }} args
- * @returns {SymbolToken}
+ * @param {T} value
+ * @param {Site} site
+ * Defaults to dummy site
+ *
+ * @returns {SymbolToken<T>}
  */
-export function makeSymbolToken(args) {
-    return new SymbolTokenImpl(args.value, args.site ?? makeDummySite())
+export function makeSymbolToken(value, site = makeDummySite()) {
+    return new SymbolTokenImpl(value, site)
 }
 
 /**
@@ -58,7 +52,7 @@ class SymbolTokenImpl {
 
     /**
      * @param {Token} other
-     * @returns {boolean}
+     * @returns {other is SymbolToken<T>}
      */
     isEqual(other) {
         return other.kind == "symbol" && other.value == this.value

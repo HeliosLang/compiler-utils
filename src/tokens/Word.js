@@ -1,9 +1,7 @@
 import { makeDummySite } from "./TokenSite.js"
 
 /**
- * @typedef {import("../errors/index.js").Site} Site
- * @typedef {import("./Token.js").Token} Token
- * @typedef {import("./Token.js").Word} Word
+ * @import { Site, Token, Word } from "src/index.js"
  */
 
 /**

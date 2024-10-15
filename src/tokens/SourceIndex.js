@@ -1,12 +1,11 @@
 import { makeDummySite, makeTokenSite } from "./TokenSite.js"
 
 /**
- * @typedef {import("../errors/Site.js").Site} Site
- * @typedef {import("./Source.js").Source} Source
- * @typedef {import("./SourceMap.js").SourceMap} SourceMap
+ * @import { Site, Source, SourceMap } from "src/index.js"
  */
 
 /**
+ * Internal, so not placed in src/index.js
  * @typedef {{
  *   site: Site
  *   incr(): void
@@ -20,7 +19,7 @@ import { makeDummySite, makeTokenSite } from "./TokenSite.js"
 /**
  * @param {{
  *   source: Source
- *   sourceMap?: Option<SourceMap>
+ *   sourceMap?: SourceMap
  * }} args
  * @returns {SourceIndex}
  */
@@ -42,7 +41,7 @@ class SourceIndexImpl {
     /**
      * @private
      * @readonly
-     * @type {Option<SourceMap>}
+     * @type {SourceMap | undefined}
      */
     sourceMap
 
@@ -66,7 +65,7 @@ class SourceIndexImpl {
 
     /**
      * @param {Source} source
-     * @param {Option<SourceMap>} sourceMap
+     * @param {SourceMap | undefined} sourceMap
      */
     constructor(source, sourceMap) {
         this.source = source

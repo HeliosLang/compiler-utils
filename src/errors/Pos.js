@@ -1,18 +1,5 @@
 /**
- * @typedef {{
- *   line: number
- *   column: number
- * }} Pos
- */
-
-/**
- * @typedef {Pos & {
- *   file: string
- *   end?: Pos
- *   alias?: string
- *   toString(): string
- *   withAlias(alias: string): Site
- * }} Site
+ * @import { Pos } from "src/index.js"
  */
 
 /**

@@ -6,9 +6,7 @@ import { makeTokenReader } from "./TokenReader.js"
 import { makeWord } from "./Word.js"
 
 /**
- * @typedef {import("./Token.js").Token} Token
- * @typedef {import("./Token.js").Word} Word
- * @typedef {import("./TokenReader.js").TokenReader} TokenReader
+ * @import { Token, TokenReader, Word } from "src/index.js"
  */
 
 describe(`TokenReader with tokens [con bool false]`, () => {

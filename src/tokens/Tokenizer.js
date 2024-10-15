@@ -1,5 +1,5 @@
 import { encodeUtf8, hexToBytes } from "@helios-lang/codec-utils"
-import { isSome } from "@helios-lang/type-utils"
+import { isDefined } from "@helios-lang/type-utils"
 import { makeErrorCollector } from "../errors/index.js"
 import { makeBoolLiteral } from "./BoolLiteral.js"
 import { makeByteArrayLiteral } from "./ByteArrayLiteral.js"
@@ -19,19 +19,9 @@ import { isDummySite, makeTokenSite } from "./TokenSite.js"
 import { makeWord } from "./Word.js"
 
 /**
- * @template {string} [T=string]
- * @typedef {import("./Token.js").SymbolToken<T>} SymbolToken
- */
-
-/**
- * @typedef {import("../errors/index.js").ErrorCollector} ErrorCollector
- * @typedef {import("../errors/index.js").Site} Site
- * @typedef {import("./Source.js").Source} Source
- * @typedef {import("./SourceIndex.js").SourceIndex} SourceIndex
- * @typedef {import("./SourceMap.js").SourceMap} SourceMap
- * @typedef {import("./Token.js").GroupKind} GroupKind
- * @typedef {import("./Token.js").Token} Token
- * @typedef {import("./Token.js").TokenGroup} TokenGroup
+ * @import { AssertTrue, IsSame, SecondArgType } from "@helios-lang/type-utils"
+ * @import { ErrorCollector, Site, SymbolToken, GroupKind, Source, SourceMap, Token, Tokenizer, TokenGroup } from "src/index.js"
+ * @import { SourceIndex } from "./SourceIndex.js"
  */
 
 /**
@@ -50,19 +40,20 @@ const DEFAULT_VALID_FIRST_LETTERS =
     "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 /**
- * @typedef {{
- *   readonly errors: ErrorCollector
- *   tokenize(nestGroups?: boolean): Token[]
- *   stream(): Generator<Token>
- * }} Tokenizer
- */
-
-/**
- * @param {{source: Source, options?: TokenizerOptions}} args
+ * @typedef {AssertTrue<IsSame<NonNullable<SecondArgType<typeof makeTokenizer>>, TokenizerOptions>>} _ignored
+ * @param {Source} source
+ * @param {object} options
+ * @param {SourceMap} [options.sourceMap]
+ * @param {string} [options.extraValidFirstLetters]
+ * @param {number} [options.realPrecision]
+ * @param {boolean} [options.tokenizeReal]
+ * @param {boolean} [options.preserveComments]
+ * @param {boolean} [options.allowLeadingZeroes]
+ * @param {ErrorCollector} [options.errorCollector]
  * @returns {Tokenizer}
  */
-export function makeTokenizer(args) {
-    return new TokenizerImpl(args.source, args.options ?? {})
+export function makeTokenizer(source, options = {}) {
+    return new TokenizerImpl(source, options)
 }
 
 /**
@@ -230,7 +221,7 @@ class TokenizerImpl {
                 startColumn: start.column,
                 endLine: end.line,
                 endColumn: end.column,
-                alias: start.alias
+                description: start.description
             })
         }
     }
@@ -361,13 +352,13 @@ class TokenizerImpl {
         let c = this.readChar()
 
         if (c == "\0") {
-            this.pushToken(makeSymbolToken({ value: "/", site }))
+            this.pushToken(makeSymbolToken("/", site))
         } else if (c == "/") {
             this.readSingleLineComment(site)
         } else if (c == "*") {
             this.readMultiLineComment(site)
         } else {
-            this.pushToken(makeSymbolToken({ value: "/", site }))
+            this.pushToken(makeSymbolToken("/", site))
             this.unreadChar()
         }
     }
@@ -714,9 +705,7 @@ class TokenizerImpl {
 
         let bytes = hexToBytes(chars.join(""))
 
-        this.pushToken(
-            makeByteArrayLiteral({ value: bytes, site: this.rangeSite(site) })
-        )
+        this.pushToken(makeByteArrayLiteral(bytes, this.rangeSite(site)))
     }
 
     /**
@@ -731,10 +720,7 @@ class TokenizerImpl {
             const s = this.readStringInternal(site)
 
             this.pushToken(
-                makeByteArrayLiteral({
-                    value: encodeUtf8(s),
-                    site: this.rangeSite(site)
-                })
+                makeByteArrayLiteral(encodeUtf8(s), this.rangeSite(site))
             )
         } else {
             this.unreadChar()
@@ -758,9 +744,9 @@ class TokenizerImpl {
 
         /**
          * This site is used for escape syntax errors
-         * @type {Option<Site>}
+         * @type {Site | undefined}
          */
-        let escapeSite = null
+        let escapeSite = undefined
 
         while (!(!escaping && c == '"')) {
             if (c == "\0") {
@@ -777,7 +763,7 @@ class TokenizerImpl {
                     chars.push("\\")
                 } else if (c == '"') {
                     chars.push(c)
-                } else if (isSome(escapeSite)) {
+                } else if (isDefined(escapeSite)) {
                     this.addSyntaxError(
                         this.rangeSite(escapeSite),
                         `invalid escape sequence ${c}`
@@ -787,7 +773,7 @@ class TokenizerImpl {
                 }
 
                 escaping = false
-                escapeSite = null
+                escapeSite = undefined
             } else {
                 if (c == "\\") {
                     escapeSite = this.currentSite
@@ -857,12 +843,7 @@ class TokenizerImpl {
             parseSecondChar(">")
         }
 
-        this.pushToken(
-            makeSymbolToken({
-                value: chars.join(""),
-                site: this.rangeSite(site)
-            })
-        )
+        this.pushToken(makeSymbolToken(chars.join(""), this.rangeSite(site)))
     }
 
     /**
@@ -888,9 +869,9 @@ class TokenizerImpl {
         const separators = []
 
         /**
-         * @type {Option<Site>}
+         * @type {Site | undefined}
          */
-        let endSite = null
+        let endSite = undefined
 
         let t = ts.shift()
         let prev = stack.pop()
@@ -1016,10 +997,10 @@ class TokenizerImpl {
                         // mutate to expected open SymbolToken
                         open.value = getOtherGroupSymbol(t)
                     } else {
-                        open = makeSymbolToken({
-                            value: getOtherGroupSymbol(t),
-                            site: current[0]?.site ?? t.site
-                        })
+                        open = makeSymbolToken(
+                            getOtherGroupSymbol(t),
+                            current[0]?.site ?? t.site
+                        )
                     }
 
                     this.addSyntaxError(t.site, `unmatched '${t.value}'`)

@@ -1,9 +1,7 @@
 import { makeDummySite } from "./TokenSite.js"
 
 /**
- * @typedef {import("../errors/index.js").Site} Site
- * @typedef {import("./Token.js").RealLiteral} RealLiteral
- * @typedef {import("./Token.js").Token} Token
+ * @import { RealLiteral, Site, Token } from "src/index.js"
  */
 
 export const REAL_PRECISION = 6

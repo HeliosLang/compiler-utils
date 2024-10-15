@@ -1,59 +1,11 @@
-import { None, isNone } from "@helios-lang/type-utils"
+import { isUndefined } from "@helios-lang/type-utils"
 import { makeErrorCollector } from "../errors/index.js"
-import { makeGroup } from "./GenericGroup.js"
-import { isGroup } from "./Token.js"
-import { makeDummySite, makeTokenSite } from "./TokenSite.js"
+import { isGroup, makeGroup } from "./GenericGroup.js"
+import { makeTokenSite } from "./TokenSite.js"
 
 /**
- * @template {TokensLike} [T=Token[]]
- * @typedef {import("./GenericGroup.js").GenericGroup<T>} GenericGroup
- */
-
-/**
- * @template {Token} [T=Token]
- * @typedef {import("./TokenMatcher.js").TokenMatcher<T>} TokenMatcher
- */
-
-/**
- * @typedef {import("../errors/index.js").ErrorCollector} ErrorCollector
- * @typedef {import("./GenericGroup.js").TokensLike} TokensLike
- * @typedef {import("./Token.js").Token} Token
- * @typedef {import("./Token.js").TokenGroup} TokenGroup
- * @typedef {import("./Token.js").Word} Word
- */
-
-/**
- * @template {Token} T
- * @typedef {T extends GenericGroup ? GenericGroup<TokenReader> : T} AugmentGroup
- */
-
-/**
- * @template {TokenMatcher[]} Matchers
- * @typedef {{[M in keyof Matchers]: Matchers[M] extends TokenMatcher<infer T> ? AugmentGroup<T> : never}} MatcherTokens
- */
-
-/**
- * @template {(GenericGroup<TokenReader> | Token)[]} Tokens
- * @typedef {Tokens extends [infer T] ? T : Tokens} UnwrapSingleton
- */
-
-/**
- * @typedef {{
- *   tokens: Token[]
- *   errors: ErrorCollector
- *   rest: Token[]
- *   assert: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => TokenReader
- *   end(): void
- *   findNext: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<[TokenReader, ...MatcherTokens<Matchers>]>
- *   findNextMatch: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<[TokenReader, ...MatcherTokens<Matchers>]>
- *   findLast: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<[TokenReader, ...MatcherTokens<Matchers>]>
- *   findLastMatch: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<[TokenReader, ...MatcherTokens<Matchers>]>
- *   readUntil: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => TokenReader
- *   isEof(): boolean
- *   matches: <Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => Option<UnwrapSingleton<MatcherTokens<Matchers>>>
- *   endMatch(throwFail?: boolean | string): TokenReader
- *   unreadToken(): void
- * }} TokenReader
+ * @import { UnwrapSingleton } from "@helios-lang/type-utils"
+ * @import { ErrorCollector, GenericGroup, MapMatchersToTokens, Token, TokenGroup, TokenMatcher, TokenReader, Word } from "src/index.js"
  */
 
 /**
@@ -163,14 +115,14 @@ class TokenReaderImpl {
      * Returns both the token and another TokenReader for preceding tokens
      * @template {TokenMatcher[]} Matchers
      * @param {[...Matchers]} matchers
-     * @returns {Option<[TokenReader, ...MatcherTokens<Matchers>]>}
+     * @returns {[TokenReader, ...MapMatchersToTokens<Matchers>] | undefined}
      */
     findNext(...matchers) {
         const i0 = this._i
 
         const res = /** @type {any} */ (this.findNextInternal(...matchers))
 
-        if (isNone(res)) {
+        if (isUndefined(res)) {
             this.errors.syntax(
                 this.tokens[i0].site,
                 `${matchers.map((m) => m.toString()).join(", ")} not found`
@@ -185,12 +137,12 @@ class TokenReaderImpl {
      * Returns both the token and another TokenReader for preceding tokens
      * @template {TokenMatcher[]} Matchers
      * @param {[...Matchers]} matchers
-     * @returns {Option<[TokenReader, ...MatcherTokens<Matchers>]>}
+     * @returns {[TokenReader, ...MapMatchersToTokens<Matchers>] | undefined}
      */
     findNextMatch(...matchers) {
         const res = /** @type {any} */ (this.findNextInternal(...matchers))
 
-        if (isNone(res)) {
+        if (isUndefined(res)) {
             // TODO: add entry to `this._failedMatches`
         }
 
@@ -201,7 +153,7 @@ class TokenReaderImpl {
      * @private
      * @template {TokenMatcher[]} Matchers
      * @param {[...Matchers]} matchers
-     * @returns {Option<[TokenReader, ...MatcherTokens<Matchers>]>}
+     * @returns {[TokenReader, ...MapMatchersToTokens<Matchers>] | undefined}
      */
     findNextInternal(...matchers) {
         const n = matchers.length
@@ -236,7 +188,7 @@ class TokenReaderImpl {
             }
         }
 
-        return None
+        return undefined
     }
 
     /**
@@ -244,14 +196,14 @@ class TokenReaderImpl {
      * Returns both the token and another TokenReader for preceding tokens
      * @template {TokenMatcher[]} Matchers
      * @param {[...Matchers]} matchers
-     * @returns {Option<[TokenReader, ...MatcherTokens<Matchers>]>}
+     * @returns {[TokenReader, ...MapMatchersToTokens<Matchers>] | undefined}
      */
     findLast(...matchers) {
         const i0 = this._i
 
         const res = /** @type {any} */ (this.findLastInternal(...matchers))
 
-        if (isNone(res)) {
+        if (isUndefined(res)) {
             this.errors.syntax(
                 this.tokens[i0].site,
                 `${matchers.map((m) => m.toString()).join(", ")} not found`
@@ -266,12 +218,12 @@ class TokenReaderImpl {
      * Returns both the token and another TokenReader for preceding tokens
      * @template {TokenMatcher[]} Matchers
      * @param {[...Matchers]} matchers
-     * @returns {Option<[TokenReader, ...MatcherTokens<Matchers>]>}
+     * @returns {[TokenReader, ...MapMatchersToTokens<Matchers>] | undefined}
      */
     findLastMatch(...matchers) {
         const res = /** @type {any} */ (this.findLastInternal(...matchers))
 
-        if (isNone(res)) {
+        if (isUndefined(res)) {
             // TODO: add entry to `this._failedMatches`
         }
 
@@ -282,7 +234,7 @@ class TokenReaderImpl {
      * @private
      * @template {TokenMatcher[]} Matchers
      * @param {[...Matchers]} matchers
-     * @returns {Option<[TokenReader, ...MatcherTokens<Matchers>]>}
+     * @returns {[TokenReader, ...MapMatchersToTokens<Matchers>] | undefined}
      */
     findLastInternal(...matchers) {
         const n = matchers.length
@@ -317,7 +269,7 @@ class TokenReaderImpl {
             }
         }
 
-        return None
+        return undefined
     }
 
     /**
@@ -359,7 +311,7 @@ class TokenReaderImpl {
     /**
      * @template {TokenMatcher[]} Matchers
      * @param  {[...Matchers]} matchers
-     * @returns {Option<UnwrapSingleton<MatcherTokens<Matchers>>>}
+     * @returns {UnwrapSingleton<MapMatchersToTokens<Matchers>> | undefined}
      */
     matches(...matchers) {
         const n = matchers.length
@@ -387,7 +339,7 @@ class TokenReaderImpl {
         }
 
         this._failedMatches.push(matchers)
-        return None
+        return undefined
     }
 
     /**
@@ -422,25 +374,6 @@ class TokenReaderImpl {
         }
 
         return this
-    }
-
-    /**
-     * @private
-     * @returns {Option<Token>}
-     */
-    readToken() {
-        const t = this.tokens[this._i]
-        this._i += 1
-
-        if (!t) {
-            this.errors.syntax(
-                this.tokens[this.tokens.length - 1]?.site ?? makeDummySite(),
-                `unexpected EOF`
-            )
-            return None
-        }
-
-        return t
     }
 
     unreadToken() {

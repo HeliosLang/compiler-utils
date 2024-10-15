@@ -6,9 +6,9 @@ import { makeTokenizer } from "./Tokenizer.js"
 
 describe("Tokenizer", () => {
     it("tokenizes #54686543616B654973414C6965 as single ByteArrayLiteral", () => {
-        const tokenizer = makeTokenizer({
-            source: makeSource({ content: "#54686543616B654973414C6965" })
-        })
+        const tokenizer = makeTokenizer(
+            makeSource("#54686543616B654973414C6965")
+        )
 
         const tokens = tokenizer.tokenize()
         tokenizer.errors.throw()
@@ -25,12 +25,10 @@ describe("Tokenizer", () => {
     })
 
     it("tokenizes 000000000000000000000000000000000000012345 as 12345 if leading zeroes is allowed", () => {
-        const tokenizer = makeTokenizer({
-            source: makeSource({
-                content: "000000000000000000000000000000000000012345"
-            }),
-            options: { allowLeadingZeroes: true }
-        })
+        const tokenizer = makeTokenizer(
+            makeSource("000000000000000000000000000000000000012345"),
+            { allowLeadingZeroes: true }
+        )
 
         const tokens = tokenizer.tokenize()
         tokenizer.errors.throw()
@@ -47,12 +45,10 @@ describe("Tokenizer", () => {
     })
 
     it("fails to tokenize 000000000000000000000000000000000000012345 is leading zeroes isn't allowed", () => {
-        const tokenizer = makeTokenizer({
-            source: makeSource({
-                content: "000000000000000000000000000000000000012345"
-            }),
-            options: { allowLeadingZeroes: false }
-        })
+        const tokenizer = makeTokenizer(
+            makeSource("000000000000000000000000000000000000012345"),
+            { allowLeadingZeroes: false }
+        )
 
         throws(() => {
             tokenizer.tokenize()

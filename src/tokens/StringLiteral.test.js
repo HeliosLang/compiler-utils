@@ -1,10 +1,10 @@
 import { strictEqual } from "node:assert"
 import { describe, it } from "node:test"
-import { expectSome } from "@helios-lang/type-utils"
+import { expectDefined } from "@helios-lang/type-utils"
 import { makeStringLiteral } from "./StringLiteral.js"
 
 /**
- * @typedef {import("./Token.js").StringLiteral} StringLiteral
+ * @import { StringLiteral } from "src/index.js"
  */
 
 describe("StringLiteral", () => {
@@ -18,6 +18,6 @@ describe("StringLiteral", () => {
 
         m.set(s.value, s)
 
-        strictEqual(expectSome(m.get(s.value)).value, s.value)
+        strictEqual(expectDefined(m.get(s.value)).value, s.value)
     })
 })

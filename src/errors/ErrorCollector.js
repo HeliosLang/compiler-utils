@@ -1,22 +1,13 @@
-import { CompilerError } from "./CompilerError.js"
+import { makeSyntaxError } from "./CompilerError.js"
 
 /**
- * @typedef {import("./Site.js").Site} Site
+ * @import { CompilerError, ErrorCollector, Site } from "src/index.js"
  */
 
 /**
- * @typedef {{
- *   errors: CompilerError[]
- *   syntax(site: Site, msg: string): void
- *   throw(): void
- * }} ErrorCollector
- */
-
-/**
- * @param {{}} _args
  * @returns {ErrorCollector}
  */
-export function makeErrorCollector(_args = {}) {
+export function makeErrorCollector() {
     return new ErrorCollectorImpl()
 }
 
@@ -39,9 +30,12 @@ class ErrorCollectorImpl {
      * @param {string} msg
      */
     syntax(site, msg) {
-        this.errors.push(CompilerError.syntax(site, msg))
+        this.errors.push(makeSyntaxError(site, msg))
     }
 
+    /**
+     * Throws an error if the more this contains at least 1 error
+     */
     throw() {
         if (this.errors.length > 0) {
             const [firstError, ...others] = this.errors

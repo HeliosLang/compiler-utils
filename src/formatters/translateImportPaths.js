@@ -1,9 +1,8 @@
-import { None } from "@helios-lang/type-utils"
 import { makeSource, makeTokenizer, makeWord } from "../tokens/index.js"
 import { makeSourceWriter } from "../tokens/SourceWriter.js"
 
 /**
- * @typedef {import("../tokens/index.js").Token} Token
+ * @import  { Token } from "src/index.js"
  */
 
 /**
@@ -13,20 +12,17 @@ import { makeSourceWriter } from "../tokens/SourceWriter.js"
  * @returns {string}
  */
 export function translateImportPaths(raw, translator) {
-    const tokens = makeTokenizer({
-        source: makeSource({ content: raw }),
-        options: {
-            preserveComments: true
-        }
+    const tokens = makeTokenizer(makeSource(raw), {
+        preserveComments: true
     }).tokenize()
     const w = makeSourceWriter()
 
-    let prev0 = /** @type {Option<Token>} */ (None)
-    let prev1 = /** @type {Option<Token>} */ (None)
-    let prev2 = /** @type {Option<Token>} */ (None)
+    let prev0 = /** @type {Token | undefined} */ (undefined)
+    let prev1 = /** @type {Token | undefined} */ (undefined)
+    let prev2 = /** @type {Token | undefined} */ (undefined)
 
     for (let t of tokens) {
-        const sl = t.kind == "string" ? t : None
+        const sl = t.kind == "string" ? t : undefined
 
         if (
             prev0?.kind == "word" &&

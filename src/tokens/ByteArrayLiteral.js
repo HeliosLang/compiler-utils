@@ -1,21 +1,22 @@
-import { bytesToHex, equalsBytes } from "@helios-lang/codec-utils"
+import { bytesToHex, equalsBytes, toBytes } from "@helios-lang/codec-utils"
 import { makeDummySite } from "./TokenSite.js"
 
 /**
- * @typedef {import("../errors/index.js").Site} Site
- * @typedef {import("./Token.js").ByteArrayLiteral} ByteArrayLiteral
- * @typedef {import("./Token.js").Token} Token
+ * @import { BytesLike } from "@helios-lang/codec-utils"
+ * @import { ByteArrayLiteral, Site, Token } from "src/index.js"
  */
 
 /**
- * @param {{
- *   value: number[]
- *   site?: Site
- * }} args
+ * @param {BytesLike} bytes
+ * Anything that can be converted to `number[]`
+ *
+ * @param {Site} site
+ * Defaults to a dummy site
+ *
  * @returns {ByteArrayLiteral}
  */
-export function makeByteArrayLiteral(args) {
-    return new ByteArrayLiteralImpl(args.value, args.site ?? makeDummySite())
+export function makeByteArrayLiteral(bytes, site = makeDummySite()) {
+    return new ByteArrayLiteralImpl(toBytes(bytes), site)
 }
 
 /**

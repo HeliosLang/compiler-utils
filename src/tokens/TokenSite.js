@@ -1,26 +1,44 @@
-import { comparePos } from "../errors/Site.js"
+import { comparePos } from "../errors/Pos.js"
 
 /**
- * @typedef {import("../errors/Site.js").Pos} Pos
- * @typedef {import("../errors/Site.js").Site} Site
+ * @import { AssertTrue, FirstArgType, IsSame } from "@helios-lang/type-utils"
+ * @import { Pos, Site } from "src/index.js"
  */
 
 const DUMMY_FILE_NAME = "::internal"
 
 /**
- * `alias`: the content might have a distinct name in the original Helios source
  * @typedef {{
  *   file: string
  *   startLine: number
  *   startColumn: number
  *   endLine?: number
  *   endColumn?: number
- *   alias?: string
+ *   description?: string
  * }} TokenSiteProps
  */
 
 /**
- * @param {TokenSiteProps} props
+ * @typedef {AssertTrue<IsSame<FirstArgType<typeof makeTokenSite>, TokenSiteProps>>} _ignored
+ * @param {object} props
+ * @param {string} props.file
+ * The name of the source
+ *
+ * @param {number} props.startLine
+ * The line number of the first character
+ *
+ * @param {number} props.startColumn
+ * The column number of the first character
+ *
+ * @param {number} [props.endLine]
+ * The (optional) line number of the last character
+ *
+ * @param {number} [props.endColumn]
+ * The (optional) column number of the last character
+ *
+ * @param {string} [props.description]
+ * An optional description which provides context to the UPLC runtime
+ *
  * @returns {Site}
  */
 export function makeTokenSite(props) {
@@ -72,7 +90,7 @@ class TokenSite {
      * @readonly
      * @type {string | undefined}
      */
-    alias
+    description
 
     /**
      * @param {TokenSiteProps} props
@@ -83,14 +101,14 @@ class TokenSite {
         startColumn,
         endLine = startLine,
         endColumn = startColumn + 1,
-        alias = undefined
+        description = undefined
     }) {
         this.file = file
         this.startLine = startLine
         this.startColumn = startColumn
         this.endLine = endLine
         this.endColumn = endColumn
-        this.alias = alias
+        this.description = description
     }
 
     /**
@@ -126,17 +144,17 @@ class TokenSite {
     }
 
     /**
-     * @param {string} alias
+     * @param {string} description
      * @returns {TokenSite}
      */
-    withAlias(alias) {
+    withDescription(description) {
         return new TokenSite({
             file: this.file,
             startLine: this.startLine,
             startColumn: this.startColumn,
             endLine: this.endLine,
             endColumn: this.endColumn,
-            alias
+            description
         })
     }
 }

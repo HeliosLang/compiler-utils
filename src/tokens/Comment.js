@@ -1,7 +1,5 @@
 /**
- * @typedef {import("../errors/index.js").Site} Site
- * @typedef {import("./Token.js").Comment} Comment
- * @typedef {import("./Token.js").Token} Token
+ * @import { Comment, Site, Token } from "src/index.js"
  */
 
 /**

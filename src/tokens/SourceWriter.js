@@ -1,5 +1,5 @@
 /**
- * @typedef {import("./index.js").Token} Token
+ * @import { Token } from "src/index.js"
  */
 
 /**

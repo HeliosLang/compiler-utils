@@ -1,9 +1,7 @@
 import { makeDummySite } from "./TokenSite.js"
 
 /**
- * @typedef {import("../errors/index.js").Site} Site
- * @typedef {import("./Token.js").StringLiteral} StringLiteral
- * @typedef {import("./Token.js").Token} Token
+ * @import { Site, StringLiteral, Token } from "src/index.js"
  */
 
 /**
@@ -16,6 +14,7 @@ import { makeDummySite } from "./TokenSite.js"
 export function makeStringLiteral(args) {
     return new StringLiteralImpl(args.value, args.site ?? makeDummySite())
 }
+
 /**
  * String literal token (utf8)
  * @implements {StringLiteral}

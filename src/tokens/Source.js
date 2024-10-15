@@ -1,5 +1,9 @@
 import { segmentArray } from "@helios-lang/codec-utils"
-import { None } from "@helios-lang/type-utils"
+
+/**
+ * @import { AssertTrue, IsSame, SecondArgType } from "@helios-lang/type-utils"
+ * @import { Source } from "src/index.js"
+ */
 
 /**
  * @typedef {{
@@ -8,28 +12,21 @@ import { None } from "@helios-lang/type-utils"
  */
 
 /**
- * length is a separate field because of performance
- * @typedef {{
- *   content: string
- *   name: string
- *   length: number
- *   lineEndLocations: number[]
- *   getChar(i: number): string
- *   getWord(i: number): string
- *   getPosition(i: number): [number, number]
- *   pretty(): string
- * }} Source
+ * Assert the second of makeSource() is the same as SourceOptions (inlining that type gives friendlier documentation)
+ * @typedef {AssertTrue<IsSame<NonNullable<SecondArgType<typeof makeSource>>, SourceOptions>>} _ignored
  */
 
 /**
- * @param {{
- *   content: string
- *   options?: SourceOptions
- * }} args
+ * @param {string} content
+ * @param {object} options
+ * @param {string} [options.name]
+ * The file name of the source.
+ * If not specified the name is extracted from the source header
+ *
  * @returns {Source}
  */
-export function makeSource(args) {
-    return new SourceImpl(args.content, args.options ?? {})
+export function makeSource(content, options = {}) {
+    return new SourceImpl(content, options ?? {})
 }
 
 /**
@@ -76,7 +73,7 @@ class SourceImpl {
     /**
      * cache of line lengths in input source.  See lineLengths getter.
      * @private
-     * @type {Option<number[]>}
+     * @type {number[] | undefined}
      */
     _lineEndLocations
 
@@ -96,7 +93,7 @@ class SourceImpl {
         this._contentChunks = segmentArray(asCodePoints, this._chunkSize)
         this.length = asCodePoints.length
         this.name = options.name ?? "unknown"
-        this._lineEndLocations = None
+        this._lineEndLocations = undefined
     }
 
     /**

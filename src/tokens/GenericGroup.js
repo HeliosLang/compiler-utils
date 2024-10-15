@@ -1,55 +1,43 @@
-import { expectSome, isNone, isSome, None } from "@helios-lang/type-utils"
+import { expectDefined, isUndefined, isDefined } from "@helios-lang/type-utils"
 import { makeSourceWriter } from "./SourceWriter.js"
 import { makeSymbolToken } from "./SymbolToken.js"
 import { makeDummySite, makeTokenSite } from "./TokenSite.js"
-import { GROUP_OPEN_SYMBOLS, GROUP_CLOSE_SYMBOLS } from "./Token.js"
 
 /**
- * @template {string} [T=string]
- * @typedef {import("./Token.js").SymbolToken<T>} SymbolToken
+ * @import { GenericGroup, GroupKind, GroupCloseKind, Site, SymbolToken, Token, TokenGroup, TokenReader } from "src/index.js"
  */
 
 /**
- * @typedef {import("../errors/index.js").Site} Site
- * @typedef {import("./Token.js").CommonGroupProps} CommonGroupProps
- * @typedef {import("./Token.js").GroupKind} GroupKind
- * @typedef {import("./Token.js").GroupCloseKind} GroupCloseKind
- * @typedef {import("./Token.js").Token} Token
+ * @satisfies {GroupKind[]}
  */
+export const GROUP_OPEN_SYMBOLS = /** @type {const} */ (["(", "[", "{"])
 
 /**
- * @typedef {Token[] | {tokens: Token[]}} TokensLike
+ * @satisfies {GroupCloseKind[]}
  */
+export const GROUP_CLOSE_SYMBOLS = /** @type {const} */ ([")", "]", "}"])
 
 /**
- * @template {TokensLike} [F=Token[]]
- * @typedef {CommonGroupProps & {
- *   fields: F[]
- * }} GenericGroup
- */
-
-/**
- * @template {TokensLike} [F=Token[]]
- * @param {{
- *   kind: GroupKind
- *   fields: F[]
- *   separators: SymbolToken[]
- *   site?: Site
- * }} args
+ * @template {Token[] | TokenReader} [F=Token[]]
+ * @param {object} options
+ * @param {GroupKind} options.kind
+ * @param {F[]} options.fields
+ * @param {SymbolToken[]} options.separators
+ * @param {Site} [options.site]
  * @returns {GenericGroup<F>}
  */
-export function makeGroup(args) {
+export function makeGroup(options) {
     return new GenericGroupImpl(
-        args.kind,
-        args.fields,
-        args.separators,
-        args.site ?? makeDummySite()
+        options.kind,
+        options.fields,
+        options.separators,
+        options.site ?? makeDummySite()
     )
 }
 
 /**
  * Group token can '(...)', '[...]' or '{...}' and can contain comma separated fields.
- * @template {TokensLike} [F=Token[]] - each field be either a list of tokens or a TokenReader
+ * @template {Token[] | TokenReader} [F=Token[]] - each field be either a list of tokens or a TokenReader
  * @implements {GenericGroup<F>}
  */
 class GenericGroupImpl {
@@ -80,7 +68,7 @@ class GenericGroupImpl {
 
     /**
      * @readonly
-     * @type {string | null}
+     * @type {string | undefined}
      */
     error
 
@@ -92,7 +80,7 @@ class GenericGroupImpl {
      */
     constructor(kind, fields, separators, site) {
         const expectCount = Math.max(fields.length - 1, 0)
-        this.error = null
+        this.error = undefined
         if (separators.length > expectCount) {
             const separatorType = separators[0].value
             this.error = `'${kind}' group: excess '${separatorType}' - expected ${expectCount}, got ${separators.length}`
@@ -100,7 +88,7 @@ class GenericGroupImpl {
             throw new Error(`expected ${expectCount}, got ${separators.length}`)
         }
 
-        expectSome(
+        expectDefined(
             site.end,
             "site end must be supplied (for closing group symbol)"
         )
@@ -112,14 +100,14 @@ class GenericGroupImpl {
     }
 
     /**
-     * @param {Option<string>} kind
-     * @param {Option<number>} nFields
+     * @param {string | undefined} kind
+     * @param {number | undefined} nFields
      * @returns {boolean}
      */
-    isGroup(kind = None, nFields = None) {
-        const nFieldsOk = isNone(nFields) || nFields == this.fields.length
+    isGroup(kind = undefined, nFields = undefined) {
+        const nFieldsOk = isUndefined(nFields) || nFields == this.fields.length
 
-        if (isSome(kind)) {
+        if (isDefined(kind)) {
             return this.kind == kind && nFieldsOk
         } else {
             return nFieldsOk
@@ -137,7 +125,7 @@ class GenericGroupImpl {
                 column: this.site.column
             })
 
-            w.writeToken(makeSymbolToken({ value: this.kind, site: this.site }))
+            w.writeToken(makeSymbolToken(this.kind, this.site))
 
             for (let i = 0; i < this.fields.length; i++) {
                 const f = this.fields[i]
@@ -154,14 +142,14 @@ class GenericGroupImpl {
             }
 
             w.writeToken(
-                makeSymbolToken({
-                    value: getOtherGroupSymbol(this.kind),
-                    site: makeTokenSite({
+                makeSymbolToken(
+                    getOtherGroupSymbol(this.kind),
+                    makeTokenSite({
                         file: this.site.file,
-                        startLine: expectSome(this.site.end?.line),
-                        startColumn: expectSome(this.site.end?.column)
+                        startLine: expectDefined(this.site.end?.line),
+                        startColumn: expectDefined(this.site.end?.column)
                     })
-                })
+                )
             )
             return w.finalize()
         } else {
@@ -182,6 +170,14 @@ class GenericGroupImpl {
             return s
         }
     }
+}
+
+/**
+ * @param {Token} t
+ * @returns {t is TokenGroup}
+ */
+export function isGroup(t) {
+    return t.kind == "(" || t.kind == "{" || t.kind == "["
 }
 
 /**

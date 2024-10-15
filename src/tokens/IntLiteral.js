@@ -1,9 +1,7 @@
 import { makeDummySite } from "./TokenSite.js"
 
 /**
- * @typedef {import("../errors/index.js").Site} Site
- * @typedef {import("./Token.js").IntLiteral} IntLiteral
- * @typedef {import("./Token.js").Token} Token
+ * @import { IntLiteral, Site, Token } from "src/index.js"
  */
 
 /**

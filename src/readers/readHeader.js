@@ -5,11 +5,8 @@ import { makeSource, makeTokenizer } from "../tokens/index.js"
  * @returns {[string, string]}
  */
 export function readHeader(src) {
-    const tokenizer = makeTokenizer({
-        source: makeSource({ content: src }),
-        options: {
-            preserveComments: false
-        }
+    const tokenizer = makeTokenizer(makeSource(src), {
+        preserveComments: false
     })
 
     const gen = tokenizer.stream()
