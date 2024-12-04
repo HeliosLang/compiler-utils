@@ -122,7 +122,11 @@ export {
  * length is a separate field because of performance
  * @typedef {object} Source
  * @prop {string} content
- * @prop {string} name
+ * @prop {string} name - provided filename (or script name parsed from script header)
+ * @prop {string} moduleName - script/module name, parsed from the script header
+ * @prop {string} purpose - script purpose, parsed from the script header
+ * @prop {string} [project] - optional project name in which the module is defined
+ * @prop {string} [moreInfo] - optional additional info about the source
  * @prop {number} length
  * @prop {number[]} lineEndLocations
  * @prop {(i: number) => string} getChar

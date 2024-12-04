@@ -8,7 +8,9 @@ describe(translateImportPaths.name, () => {
      * @param {string} path
      * @returns {string}
      */
-    const src = (path) => `import { /*weird comment*/ Datum } from ${path}
+    const src = (
+        path
+    ) => `testing importPath\nimport { /*weird comment*/ Datum } from ${path}
     
 func main(datum: Datum, _, _) -> Bool {
     // single-line comment

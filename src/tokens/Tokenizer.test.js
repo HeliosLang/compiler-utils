@@ -7,14 +7,14 @@ import { makeTokenizer } from "./Tokenizer.js"
 describe("Tokenizer", () => {
     it("tokenizes #54686543616B654973414C6965 as single ByteArrayLiteral", () => {
         const tokenizer = makeTokenizer(
-            makeSource("#54686543616B654973414C6965")
+            makeSource("testing tokenizer\n#54686543616B654973414C6965")
         )
 
         const tokens = tokenizer.tokenize()
         tokenizer.errors.throw()
 
-        strictEqual(tokens.length, 1)
-        const token = tokens[0]
+        strictEqual(tokens.length, 3)
+        const token = tokens[2]
         strictEqual(token.kind, "bytes")
 
         if (token.kind == "bytes") {
@@ -26,15 +26,17 @@ describe("Tokenizer", () => {
 
     it("tokenizes 000000000000000000000000000000000000012345 as 12345 if leading zeroes is allowed", () => {
         const tokenizer = makeTokenizer(
-            makeSource("000000000000000000000000000000000000012345"),
+            makeSource(
+                "testing tokenizer\n000000000000000000000000000000000000012345"
+            ),
             { allowLeadingZeroes: true }
         )
 
         const tokens = tokenizer.tokenize()
         tokenizer.errors.throw()
 
-        strictEqual(tokens.length, 1)
-        const token = tokens[0]
+        strictEqual(tokens.length, 3)
+        const token = tokens[2]
         strictEqual(token.kind, "int")
 
         if (token.kind == "int") {
@@ -46,7 +48,9 @@ describe("Tokenizer", () => {
 
     it("fails to tokenize 000000000000000000000000000000000000012345 is leading zeroes isn't allowed", () => {
         const tokenizer = makeTokenizer(
-            makeSource("000000000000000000000000000000000000012345"),
+            makeSource(
+                "testing tokenizer\n000000000000000000000000000000000000012345"
+            ),
             { allowLeadingZeroes: false }
         )
 
