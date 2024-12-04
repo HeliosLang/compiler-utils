@@ -6,9 +6,10 @@ import { segmentArray } from "@helios-lang/codec-utils"
  */
 
 /**
- * @typedef {{
- *   name?: string
- * }} SourceOptions
+ * @typedef {object} SourceOptions
+ * @property {string} [name] - optional file name; defaults to  the module name parsed from the source's `<purpose> <name>` header
+ * @property {string} [project] - optional project name; can be used to add  transpancy for advanced cross-project source-file reference use-cases
+ * @property {string} [moreInfo] - additional textual info about the source, useful in advanced code-generation cases
  */
 
 /**
@@ -19,10 +20,9 @@ import { segmentArray } from "@helios-lang/codec-utils"
 /**
  * @param {string} content
  * @param {object} options
- * @param {string} [options.name]
- * The file name of the source.
- * If not specified the name is extracted from the source header
- *
+ * @param {string} [options.name] optional file name; defaults to  the module name parsed from the source's `<purpose> <name>` header
+ * @param {string} [options.project] optional project name; can be used to add  transpancy for advanced cross-project source-file reference use-cases
+ * @param {string} [options.moreInfo] additional textual info about the source, useful in advanced code-generation cases
  * @returns {Source}
  */
 export function makeSource(content, options = {}) {
@@ -53,6 +53,34 @@ class SourceImpl {
      * @type {number}
      */
     length
+
+    /**
+     * module name of the source
+     * @readonly
+     * @type {string}
+     */
+    moduleName
+
+    /**
+     * declared script purpose of the source
+     * @readonly
+     * @type {string}
+     */
+    purpose
+
+    /**
+     * optional project name of the source
+     * @readonly
+     * @type {string | undefined}
+     */
+    project
+
+    /**
+     * additional textual info about the source, used in advanced code-generation cases
+     * @readonly
+     * @type {string | undefined}
+     */
+    moreInfo
 
     /**
      * Number of characters in each chunk
@@ -92,7 +120,13 @@ class SourceImpl {
         )
         this._contentChunks = segmentArray(asCodePoints, this._chunkSize)
         this.length = asCodePoints.length
-        this.name = options.name ?? "unknown"
+        const parsedInfo = minimalScriptInfo(content)
+        this.name = options.name ?? parsedInfo.moduleName
+        this.moduleName = parsedInfo.moduleName
+        this.purpose = parsedInfo.purpose
+        this.project = options.project
+        this.moreInfo = options.moreInfo
+
         this._lineEndLocations = undefined
     }
 
@@ -205,4 +239,25 @@ class SourceImpl {
 
         return lines.join("\n")
     }
+}
+
+/**
+ * extracts script purpose and name from a source string without dependency on full parser
+ * @param {string} src
+ * @returns {{ purpose: string, moduleName: string }}
+ */
+function minimalScriptInfo(src) {
+    const [_, purpose, moduleName] =
+        src.match(
+            /(module|minting|spending|staking|testing|mixed|voting)\s+(\w+)/m
+        ) || []
+    if (!purpose) {
+        throw new Error("missing or invalid script header: no purpose found")
+    }
+    if (!moduleName || !/^[a-zA-Z][_a-zA-Z0-9]*$/.test(moduleName)) {
+        throw new Error(
+            `invalid script header: invalid module name found: ${moduleName || "‹missing›"}`
+        )
+    }
+    return { purpose, moduleName }
 }
