@@ -119,15 +119,15 @@ export {
  */
 
 /**
- * length is a separate field because of performance
+ * Source is used by textual-Uplc, IR and Helios
  * @typedef {object} Source
  * @prop {string} content
- * @prop {string} name - provided filename (or script name parsed from script header)
- * @prop {string} moduleName - script/module name, parsed from the script header
- * @prop {string} purpose - script purpose, parsed from the script header
- * @prop {string} [project] - optional project name in which the module is defined
- * @prop {string} [moreInfo] - optional additional info about the source
- * @prop {number} length
+ * @prop {string} name provided filename (or script name parsed from script header)
+ * @prop {string} [moduleName] optional helios-specific script/module name, parsed from the script header
+ * @prop {string} [purpose] optional helios-specific script purpose, parsed from the script header
+ * @prop {string} [project] optional project name in which the module is defined
+ * @prop {string} [moreInfo] optional additional info about the source
+ * @prop {number} length length is a separate field because of performance
  * @prop {number[]} lineEndLocations
  * @prop {(i: number) => string} getChar
  * @prop {(i: number) => string} getWord

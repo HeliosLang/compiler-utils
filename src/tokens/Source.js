@@ -9,6 +9,8 @@ import { segmentArray } from "@helios-lang/codec-utils"
  * @typedef {object} SourceOptions
  * @property {string} [name] - optional file name; defaults to  the module name parsed from the source's `<purpose> <name>` header
  * @property {string} [project] - optional project name; can be used to add  transpancy for advanced cross-project source-file reference use-cases
+ * @property {string} [purpose] - helios-specific sources have a purpose
+ * @property {string} [moduleName] - can differ from file name
  * @property {string} [moreInfo] - additional textual info about the source, useful in advanced code-generation cases
  */
 
@@ -20,13 +22,36 @@ import { segmentArray } from "@helios-lang/codec-utils"
 /**
  * @param {string} content
  * @param {object} options
- * @param {string} [options.name] optional file name; defaults to  the module name parsed from the source's `<purpose> <name>` header
+ * @param {string} [options.name] optional file name; defaults to the empty string
+ * @param {string} [options.purpose] helios-specific sources have a purpose
+ * @param {string} [options.moduleName] can differ from file name
  * @param {string} [options.project] optional project name; can be used to add  transpancy for advanced cross-project source-file reference use-cases
  * @param {string} [options.moreInfo] additional textual info about the source, useful in advanced code-generation cases
  * @returns {Source}
  */
 export function makeSource(content, options = {}) {
     return new SourceImpl(content, options ?? {})
+}
+
+/**
+ * Parses purpose and moduleName from source
+ * @param {string} content
+ * @param {object} options
+ * @param {string} [options.name] optional file name; defaults to  the module name parsed from the source's `<purpose> <name>` header
+ * @param {string} [options.project] optional project name; can be used to add  transpancy for advanced cross-project source-file reference use-cases
+ * @param {string} [options.moreInfo] additional textual info about the source, useful in advanced code-generation cases
+ * @returns {Source}
+ */
+export function makeHeliosSource(content, options = {}) {
+    const { moduleName, purpose } = minimalScriptInfo(content)
+    const name = options.name ?? moduleName
+
+    return makeSource(content, {
+        ...options,
+        name,
+        moduleName,
+        purpose
+    })
 }
 
 /**
@@ -57,14 +82,14 @@ class SourceImpl {
     /**
      * module name of the source
      * @readonly
-     * @type {string}
+     * @type {string | undefined}
      */
     moduleName
 
     /**
      * declared script purpose of the source
      * @readonly
-     * @type {string}
+     * @type {string | undefined}
      */
     purpose
 
@@ -111,19 +136,23 @@ class SourceImpl {
      */
     constructor(content, options = {}) {
         this.content = content
+
         // one-step split to utf-8 runes in the content
         const asCodePoints = [...content]
+
         // heuristic for chunk size
         this._chunkSize = Math.max(
             100,
             Math.floor(Math.sqrt(asCodePoints.length))
         )
+
         this._contentChunks = segmentArray(asCodePoints, this._chunkSize)
+
         this.length = asCodePoints.length
-        const parsedInfo = minimalScriptInfo(content)
-        this.name = options.name ?? parsedInfo.moduleName
-        this.moduleName = parsedInfo.moduleName
-        this.purpose = parsedInfo.purpose
+
+        this.name = options.name ?? options.moduleName ?? ""
+        this.moduleName = options.moduleName
+        this.purpose = options.purpose
         this.project = options.project
         this.moreInfo = options.moreInfo
 
