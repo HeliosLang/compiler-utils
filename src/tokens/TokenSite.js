@@ -2,7 +2,7 @@ import { comparePos } from "../errors/Pos.js"
 
 /**
  * @import { AssertTrue, FirstArgType, IsSame } from "@helios-lang/type-utils"
- * @import { Pos, Site } from "src/index.js"
+ * @import { Pos, Site } from "../index.js"
  */
 
 const DUMMY_FILE_NAME = "::internal"

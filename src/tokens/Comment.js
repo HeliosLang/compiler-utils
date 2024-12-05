@@ -1,5 +1,5 @@
 /**
- * @import { Comment, Site, Token } from "src/index.js"
+ * @import { Comment, Site, Token } from "../index.js"
  */
 
 /**

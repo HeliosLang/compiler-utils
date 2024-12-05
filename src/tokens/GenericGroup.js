@@ -4,7 +4,7 @@ import { makeSymbolToken } from "./SymbolToken.js"
 import { makeDummySite, makeTokenSite } from "./TokenSite.js"
 
 /**
- * @import { GenericGroup, GroupKind, GroupCloseKind, Site, SymbolToken, Token, TokenGroup, TokenReader } from "src/index.js"
+ * @import { GenericGroup, GroupKind, GroupCloseKind, Site, SymbolToken, Token, TokenGroup, TokenReader } from "../index.js"
  */
 
 /**

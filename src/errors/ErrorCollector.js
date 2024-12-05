@@ -1,7 +1,7 @@
 import { makeSyntaxError } from "./CompilerError.js"
 
 /**
- * @import { CompilerError, ErrorCollector, Site } from "src/index.js"
+ * @import { CompilerError, ErrorCollector, Site } from "../index.js"
  */
 
 /**

@@ -2,7 +2,7 @@ import { segmentArray } from "@helios-lang/codec-utils"
 
 /**
  * @import { AssertTrue, IsSame, SecondArgType } from "@helios-lang/type-utils"
- * @import { Source } from "src/index.js"
+ * @import { Source } from "../index.js"
  */
 
 /**

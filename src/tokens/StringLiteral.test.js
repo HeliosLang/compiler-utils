@@ -4,7 +4,7 @@ import { expectDefined } from "@helios-lang/type-utils"
 import { makeStringLiteral } from "./StringLiteral.js"
 
 /**
- * @import { StringLiteral } from "src/index.js"
+ * @import { StringLiteral } from "../index.js"
  */
 
 describe("StringLiteral", () => {

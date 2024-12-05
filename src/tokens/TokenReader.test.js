@@ -6,7 +6,7 @@ import { makeTokenReader } from "./TokenReader.js"
 import { makeWord } from "./Word.js"
 
 /**
- * @import { Token, TokenReader, Word } from "src/index.js"
+ * @import { Token, TokenReader, Word } from "../index.js"
  */
 
 describe(`TokenReader with tokens [con bool false]`, () => {

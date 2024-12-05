@@ -1,5 +1,5 @@
 /**
- * @import { Pos } from "src/index.js"
+ * @import { Pos } from "../index.js"
  */
 
 /**

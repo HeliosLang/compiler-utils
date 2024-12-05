@@ -1,5 +1,5 @@
 /**
- * @import { CompilerError, CompilerErrorKind, Site } from "src/index.js"
+ * @import { CompilerError, CompilerErrorKind, Site } from "../index.js"
  */
 
 /**

@@ -20,7 +20,7 @@ import { makeWord } from "./Word.js"
 
 /**
  * @import { AssertTrue, IsSame, SecondArgType } from "@helios-lang/type-utils"
- * @import { ErrorCollector, Site, SymbolToken, GroupKind, Source, SourceMap, Token, Tokenizer, TokenGroup } from "src/index.js"
+ * @import { ErrorCollector, Site, SymbolToken, GroupKind, Source, SourceMap, Token, Tokenizer, TokenGroup } from "../index.js"
  * @import { SourceIndex } from "./SourceIndex.js"
  */
 

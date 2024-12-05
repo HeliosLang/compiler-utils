@@ -1,7 +1,7 @@
 import { makeDummySite } from "./TokenSite.js"
 
 /**
- * @import { BoolLiteral, Site, Token } from "src/index.js"
+ * @import { BoolLiteral, Site, Token } from "../index.js"
  */
 
 /**

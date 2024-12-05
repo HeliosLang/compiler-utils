@@ -3,7 +3,7 @@ import { makeDummySite } from "./TokenSite.js"
 
 /**
  * @import { BytesLike } from "@helios-lang/codec-utils"
- * @import { ByteArrayLiteral, Site, Token } from "src/index.js"
+ * @import { ByteArrayLiteral, Site, Token } from "../index.js"
  */
 
 /**

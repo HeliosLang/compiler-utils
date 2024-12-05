@@ -2,7 +2,7 @@ import { makeSource, makeTokenizer, makeWord } from "../tokens/index.js"
 import { makeSourceWriter } from "../tokens/SourceWriter.js"
 
 /**
- * @import  { Token } from "src/index.js"
+ * @import  { Token } from "../index.js"
  */
 
 /**

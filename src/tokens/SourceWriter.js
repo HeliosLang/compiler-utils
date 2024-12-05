@@ -1,5 +1,5 @@
 /**
- * @import { Token } from "src/index.js"
+ * @import { Token } from "../index.js"
  */
 
 /**

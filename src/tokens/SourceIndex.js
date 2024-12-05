@@ -1,7 +1,7 @@
 import { makeDummySite, makeTokenSite } from "./TokenSite.js"
 
 /**
- * @import { Site, Source, SourceMap } from "src/index.js"
+ * @import { Site, Source, SourceMap } from "../index.js"
  */
 
 /**

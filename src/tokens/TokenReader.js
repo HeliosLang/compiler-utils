@@ -5,7 +5,7 @@ import { makeTokenSite } from "./TokenSite.js"
 
 /**
  * @import { UnwrapSingleton } from "@helios-lang/type-utils"
- * @import { ErrorCollector, GenericGroup, MapMatchersToTokens, Token, TokenGroup, TokenMatcher, TokenReader, Word } from "src/index.js"
+ * @import { ErrorCollector, GenericGroup, MapMatchersToTokens, Token, TokenGroup, TokenMatcher, TokenReader, Word } from "../index.js"
  */
 
 /**

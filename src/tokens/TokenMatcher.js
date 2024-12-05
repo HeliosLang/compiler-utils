@@ -3,7 +3,7 @@ import { getOtherGroupSymbol, isGroup } from "./GenericGroup.js"
 import { makeSymbolToken } from "./SymbolToken.js"
 
 /**
- * @import { BoolLiteral, ByteArrayLiteral, IntLiteral, RealLiteral, StringLiteral, SymbolToken, Token, TokenGroup, TokenMatcher, Word } from "src/index.js"
+ * @import { BoolLiteral, ByteArrayLiteral, IntLiteral, RealLiteral, StringLiteral, SymbolToken, Token, TokenGroup, TokenMatcher, Word } from "../index.js"
  */
 
 /**
