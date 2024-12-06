@@ -29,6 +29,7 @@ export {
     makeTokenReader,
     makeTokenSite,
     makeWord,
+    mergeSites,
     oneOf,
     reallit,
     strlit,

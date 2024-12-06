@@ -27,5 +27,10 @@ export {
     word
 } from "./TokenMatcher.js"
 export { makeTokenReader } from "./TokenReader.js"
-export { isDummySite, makeDummySite, makeTokenSite } from "./TokenSite.js"
+export {
+    isDummySite,
+    makeDummySite,
+    makeTokenSite,
+    mergeSites
+} from "./TokenSite.js"
 export { makeWord } from "./Word.js"
