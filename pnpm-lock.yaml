@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@helios-lang/codec-utils':
-        specifier: ^0.3.2
-        version: 0.3.2
+        specifier: ^0.3.3
+        version: 0.3.3
       '@helios-lang/type-utils':
         specifier: ^0.2.8
         version: 0.2.8
@@ -83,8 +83,8 @@ packages:
     resolution: {integrity: sha512-vH9PiIMMwvhCx31Af3HiGzsVNULDbyVkHXwlemn/B0TFj/00ho3y55efXrUZTfQipxoHC5u4xq6zblww1zm1Ig==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@helios-lang/codec-utils@0.3.2':
-    resolution: {integrity: sha512-C4lJSaoeI+E78w5BTMeZSkiYN9el6l1HX2XxMq5G/LkVgEQglv7UrWi01tDfayN1SIJg7j8Rvlj1wcwUoph/qA==}
+  '@helios-lang/codec-utils@0.3.3':
+    resolution: {integrity: sha512-4otFhdJ6c+Sokskq6VNyYprSes47gLkdNBPs4z5tZxKRxVCw326Co/tfCjVgp1ipomQmeVBhuULu8bgMhCEAug==}
 
   '@helios-lang/type-utils@0.2.8':
     resolution: {integrity: sha512-ldtxPIZbE2TbbiFvvTqgiHng1uWmZj0w8z4yMMxPH79R+qt+romAOOmUXVdAN6YM2cA3yiE4lRlRpyGlVEQNMw==}
@@ -799,7 +799,7 @@ snapshots:
     dependencies:
       levn: 0.4.1
 
-  '@helios-lang/codec-utils@0.3.2': {}
+  '@helios-lang/codec-utils@0.3.3': {}
 
   '@helios-lang/type-utils@0.2.8': {}
 
