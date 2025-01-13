@@ -146,8 +146,14 @@ class GenericGroupImpl {
                     getOtherGroupSymbol(this.kind),
                     makeTokenSite({
                         file: this.site.file,
-                        startLine: expectDefined(this.site.end?.line),
-                        startColumn: expectDefined(this.site.end?.column)
+                        startLine: expectDefined(
+                            this.site.end?.line,
+                            "site end line undefined"
+                        ),
+                        startColumn: expectDefined(
+                            this.site.end?.column,
+                            "site end column undefined"
+                        )
                     })
                 )
             )

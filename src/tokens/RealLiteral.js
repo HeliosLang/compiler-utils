@@ -6,7 +6,7 @@ import { makeDummySite } from "./TokenSite.js"
 
 export const REAL_PRECISION = 6
 
-const REAL_FACTOR = 10n ** BigInt(REAL_PRECISION)
+const REAL_FACTOR = /* @__PURE__ */ (() => 10n ** BigInt(REAL_PRECISION))()
 
 /**
  * @param {{

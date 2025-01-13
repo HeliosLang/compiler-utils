@@ -8,12 +8,13 @@
     "author": "Christian Schmitz",
     "license": "BSD-3-Clause",
     "scripts": {
-        "build": "pnpm run prettify && pnpm run lint && pnpm run build:types && pnpm run test:suite",
+        "build": "pnpm run prettify && pnpm run lint && pnpm run build:types && pnpm run test:suite && pnpm run test:integ",
         "build:docs": "typedoc --tsconfig ./jsconfig.json",
         "build:types": "tsc -p jsconfig.json --noEmit false --emitDeclarationOnly",
         "lint": "eslint .",
         "prettify": "prettier . --write",
-        "test": "pnpm run test:pretty && pnpm run lint && pnpm run test:types && pnpm run test:suite",
+        "test": "pnpm run test:pretty && pnpm run lint && pnpm run test:types && pnpm run test:suite && pnpm run test:integ",
+        "test:integ": "pnpm --prefix ./test/all-pure run test",
         "test:pretty": "prettier . --check",
         "test:suite": "node --test  --experimental-test-coverage",
         "test:types": "tsc -p jsconfig.json --noEmit"
@@ -30,8 +31,8 @@
         "typescript": "^5.6.2"
     },
     "dependencies": {
-        "@helios-lang/codec-utils": "^0.3.3",
-        "@helios-lang/type-utils": "^0.2.8"
+        "@helios-lang/codec-utils": "^0.3.4",
+        "@helios-lang/type-utils": "^0.2.9"
     },
     "prettier": {
         "trailingComma": "none",
