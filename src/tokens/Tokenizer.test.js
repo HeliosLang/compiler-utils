@@ -59,4 +59,13 @@ describe("Tokenizer", () => {
             tokenizer.errors.throw()
         })
     })
+
+    it("fails with a user-friendly error for '('", () => {
+        const tokenizer = makeTokenizer(makeSource("("))
+
+        throws(() => {
+            tokenizer.tokenize()
+            tokenizer.errors.throw()
+        }, /unmatched/)
+    })
 })

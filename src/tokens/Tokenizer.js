@@ -1029,7 +1029,7 @@ class TokenizerImpl {
         if (stack.length > 0) {
             const t = stack[stack.length - 1][0]
 
-            if (t.kind != "symbol") {
+            if (t?.kind != "symbol") {
                 if (current.length > 0) {
                     const open = current[0]
 
