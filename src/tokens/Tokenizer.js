@@ -382,10 +382,12 @@ class TokenizerImpl {
      * @param {Site} site
      */
     readSingleLineComment(site) {
+        let s = this.currentSite
         let c = this.readChar()
         const chars = ["/", "/", c]
 
         while (c != "\n" && c != "\0") {
+            s = this.currentSite
             c = this.readChar()
             chars.push(c)
         }
@@ -397,6 +399,10 @@ class TokenizerImpl {
                     site: this.rangeSite(site)
                 })
             )
+        }
+
+        if (this._preserveNewlines) {
+            this.pushToken(makeNL(s))
         }
     }
 

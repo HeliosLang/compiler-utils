@@ -199,4 +199,54 @@ describe("TokenReader.insertSemicolons", () => {
 
         strictEqual(r2.originalTokens.length, n)
     })
+
+    it("inserts semicolon after single line comment (comments kept as tokens)", () => {
+        const src = `
+        a: Option[Int] = Option[Int]::Some{10};
+        b: Option[ByteArray] = Option[ByteArray]::Some{#} // comment
+            
+        (a, b).switch{
+            (Some, _) => true,
+            (None, None) => false,
+            (_, Some) => false
+        }`
+
+        const tokens = makeTokenizer(makeSource(src), {
+            preserveComments: true,
+            preserveNewlines: true
+        }).tokenize()
+
+        const r = makeTokenReader({ tokens })
+
+        const n = tokens.length
+
+        const r2 = r.insertSemicolons(["=", ":", ".", ";"])
+
+        strictEqual(r2.originalTokens.length, n + 1)
+    })
+
+    it("inserts semicolon after single line comment (comments discarded)", () => {
+        const src = `
+        a: Option[Int] = Option[Int]::Some{10};
+        b: Option[ByteArray] = Option[ByteArray]::Some{#} // comment
+            
+        (a, b).switch{
+            (Some, _) => true,
+            (None, None) => false,
+            (_, Some) => false
+        }`
+
+        const tokens = makeTokenizer(makeSource(src), {
+            preserveComments: false,
+            preserveNewlines: true
+        }).tokenize()
+
+        const r = makeTokenReader({ tokens })
+
+        const n = tokens.length
+
+        const r2 = r.insertSemicolons(["=", ":", ".", ";"])
+
+        strictEqual(r2.originalTokens.length, n + 1)
+    })
 })
