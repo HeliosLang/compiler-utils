@@ -327,7 +327,7 @@ export {
  * Tokens including newlines (can be used for automatic semicolon injection)
  *
  * @prop {Token[]} rest
- * Unread tokens optionally excludng newlines
+ * Unread tokens optionally excluding newlines
  *
  * @prop {ErrorCollector} errors
  *
@@ -342,4 +342,9 @@ export {
  * @prop {<Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => UnwrapSingleton<MapMatchersToTokens<Matchers>> | undefined} matches
  * @prop {(throwFail?: boolean | string) => TokenReader} endMatch
  * @prop {() => void} unreadToken
+ *
+ * @prop {(multilineOperators: string[]) => TokenReader} insertSemicolons
+ * Creates a new TokenReader with semicolons inserted right before newlines if:
+ *   - not first/last in the token list
+ *   - not surrounded by multiline operators
  */
