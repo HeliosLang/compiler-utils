@@ -9,3 +9,4 @@ log.*
 *.test.d.ts
 *.test.d.ts.map
 test
+eslint.config.js

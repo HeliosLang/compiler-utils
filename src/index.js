@@ -321,8 +321,16 @@ export {
 /**
  * @typedef {object} TokenReader
  * @prop {Token[]} tokens
- * @prop {ErrorCollector} errors
+ * Tokens optionally excluding newlines
+ *
+ * @prop {Token[]} originalTokens
+ * Tokens including newlines (can be used for automatic semicolon injection)
+ *
  * @prop {Token[]} rest
+ * Unread tokens optionally excludng newlines
+ *
+ * @prop {ErrorCollector} errors
+ *
  * @prop {<Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => TokenReader} assert
  * @prop {() => void} end
  * @prop {<Matchers extends TokenMatcher[]>(...matchers: [...Matchers]) => [TokenReader, ...MapMatchersToTokens<Matchers>] | undefined} findNext
