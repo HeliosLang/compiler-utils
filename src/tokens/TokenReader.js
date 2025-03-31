@@ -12,11 +12,16 @@ import { makeTokenSite } from "./TokenSite.js"
  * @param {{
  *   tokens: Token[]
  *   errors?: ErrorCollector
+ *   ignoreNewlines?: boolean
  * }} args
  * @returns {TokenReader}
  */
 export function makeTokenReader(args) {
-    return new TokenReaderImpl(args.tokens, args.errors ?? makeErrorCollector())
+    return new TokenReaderImpl(
+        args.tokens,
+        args.errors ?? makeErrorCollector(),
+        args.ignoreNewlines ?? false
+    )
 }
 
 /**
@@ -24,6 +29,16 @@ export function makeTokenReader(args) {
  */
 class TokenReaderImpl {
     /**
+     * Tokens including newlines
+     * Can be used for semicolon injection
+     * @readonly
+     * @type {Token[]}
+     */
+    originalTokens
+
+    /**
+     * Tokens excluding newlines
+     * (Newlines are ignored by the matchers)
      * @readonly
      * @type {Token[]}
      */
@@ -34,6 +49,13 @@ class TokenReaderImpl {
      * @type {ErrorCollector}
      */
     errors
+
+    /**
+     * @private
+     * @readonly
+     * @type {boolean}
+     */
+    _ignoreNewlines
 
     /**
      * @private
@@ -50,15 +72,21 @@ class TokenReaderImpl {
     /**
      * @param {Token[]} tokens
      * @param {ErrorCollector} errors
+     * @param {boolean} ignoreNewlines
      */
-    constructor(tokens, errors) {
-        this.tokens = tokens
+    constructor(tokens, errors, ignoreNewlines) {
+        this.originalTokens = tokens
+        this.tokens = ignoreNewlines
+            ? tokens.filter((t) => t.kind != "newline")
+            : tokens
         this.errors = errors
+        this.originalTokens
         this._i = 0
         this._failedMatches = []
     }
 
     /**
+     * Excludes newlines
      * @type {Token[]}
      */
     get rest() {
@@ -169,9 +197,7 @@ class TokenReaderImpl {
                     const matched = /** @type {any} */ (
                         this.tokens
                             .slice(i, i + n)
-                            .map((t) =>
-                                isGroup(t) ? augmentGroup(this, t) : t
-                            )
+                            .map((t) => (isGroup(t) ? this.augmentGroup(t) : t))
                     )
 
                     this._i = i + n
@@ -180,7 +206,8 @@ class TokenReaderImpl {
                     return /** @type {any} */ ([
                         new TokenReaderImpl(
                             this.tokens.slice(i0, i),
-                            this.errors
+                            this.errors,
+                            this._ignoreNewlines
                         ),
                         ...matched
                     ])
@@ -250,9 +277,7 @@ class TokenReaderImpl {
                     const matched = /** @type {any} */ (
                         this.tokens
                             .slice(i, i + n)
-                            .map((t) =>
-                                isGroup(t) ? augmentGroup(this, t) : t
-                            )
+                            .map((t) => (isGroup(t) ? this.augmentGroup(t) : t))
                     )
 
                     this._i = i + n
@@ -261,7 +286,8 @@ class TokenReaderImpl {
                     return /** @type {any} */ ([
                         new TokenReaderImpl(
                             this.tokens.slice(i0, i),
-                            this.errors
+                            this.errors,
+                            this._ignoreNewlines
                         ),
                         ...matched
                     ])
@@ -292,7 +318,11 @@ class TokenReaderImpl {
 
             return reader
         } else {
-            let reader = new TokenReaderImpl(this.tokens, this.errors)
+            let reader = new TokenReaderImpl(
+                this.tokens,
+                this.errors,
+                this._ignoreNewlines
+            )
 
             reader._i = this._i
             this._i = this.tokens.length
@@ -325,7 +355,7 @@ class TokenReaderImpl {
                 const matched = /** @type {any} */ (
                     this.tokens
                         .slice(this._i, this._i + n)
-                        .map((t) => (isGroup(t) ? augmentGroup(this, t) : t))
+                        .map((t) => (isGroup(t) ? this.augmentGroup(t) : t))
                 )
                 this._failedMatches = []
                 this._i += n
@@ -379,18 +409,20 @@ class TokenReaderImpl {
     unreadToken() {
         this._i = Math.max(this._i - 1, 0)
     }
-}
 
-/**
- * @param {TokenReader} r
- * @param {GenericGroup<Token[]>} t
- * @returns {GenericGroup<TokenReader>}
- */
-function augmentGroup(r, t) {
-    return makeGroup({
-        kind: t.kind,
-        fields: t.fields.map((f) => new TokenReaderImpl(f, r.errors)),
-        separators: t.separators,
-        site: t.site
-    })
+    /**
+     * @private
+     * @param {GenericGroup<Token[]>} t
+     * @returns {GenericGroup<TokenReader>}
+     */
+    augmentGroup(t) {
+        return makeGroup({
+            kind: t.kind,
+            fields: t.fields.map(
+                (f) => new TokenReaderImpl(f, this.errors, this._ignoreNewlines)
+            ),
+            separators: t.separators,
+            site: t.site
+        })
+    }
 }

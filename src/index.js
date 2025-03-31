@@ -21,6 +21,7 @@ export {
     makeDummySite,
     makeGroup,
     makeIntLiteral,
+    makeNL,
     makeRealLiteral,
     makeSource,
     makeStringLiteral,
@@ -209,6 +210,14 @@ export {
  */
 
 /**
+ * @typedef {object} NL
+ * @prop {Site} site
+ * @prop {"newline"} kind
+ * @prop {(other: Token) => boolean} isEqual
+ * @prop {(preserveWhitespace?: boolean) => string} toString
+ */
+
+/**
  * @typedef {object} RealLiteral
  * @prop {Site} site
  * @prop {"real"} kind
@@ -255,6 +264,7 @@ export {
  *   | ByteArrayLiteral
  *   | Comment
  *   | IntLiteral
+ *   | NL
  *   | RealLiteral
  *   | StringLiteral
  *   | SymbolToken

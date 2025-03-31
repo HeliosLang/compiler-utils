@@ -11,6 +11,7 @@ import {
     makeGroup
 } from "./GenericGroup.js"
 import { makeIntLiteral } from "./IntLiteral.js"
+import { makeNL } from "./NL.js"
 import { REAL_PRECISION, makeRealLiteral } from "./RealLiteral.js"
 import { makeSourceIndex } from "./SourceIndex.js"
 import { makeStringLiteral } from "./StringLiteral.js"
@@ -31,6 +32,7 @@ import { makeWord } from "./Word.js"
  *   realPrecision?: number
  *   tokenizeReal?: boolean
  *   preserveComments?: boolean
+ *   preserveNewlines?: boolean
  *   allowLeadingZeroes?: boolean
  *   errorCollector?: ErrorCollector
  * }} TokenizerOptions
@@ -48,6 +50,7 @@ const DEFAULT_VALID_FIRST_LETTERS =
  * @param {number} [options.realPrecision]
  * @param {boolean} [options.tokenizeReal]
  * @param {boolean} [options.preserveComments]
+ * @param {boolean} [options.preserveNewlines]
  * @param {boolean} [options.allowLeadingZeroes]
  * @param {ErrorCollector} [options.errorCollector]
  * @returns {Tokenizer}
@@ -80,6 +83,13 @@ class TokenizerImpl {
      * @type {boolean}
      */
     _preserveComments
+
+    /**
+     * @private
+     * @readonly
+     * @type {boolean}
+     */
+    _preserveNewlines
 
     /**
      * @private
@@ -124,6 +134,7 @@ class TokenizerImpl {
         this._realPrecision = options?.realPrecision ?? REAL_PRECISION
         this._tokenizeReal = options?.tokenizeReal ?? true
         this._preserveComments = options?.preserveComments ?? false
+        this._preserveNewlines = options?.preserveNewlines ?? false
         this._allowLeadingZeroes = options?.allowLeadingZeroes ?? false
         this.errors = options.errorCollector ?? makeErrorCollector()
 
@@ -301,6 +312,8 @@ class TokenizerImpl {
             (c >= "{" && c <= "}")
         ) {
             this.readSymbol(site, c)
+        } else if (this._preserveNewlines && c == "\n") {
+            this.pushToken(makeNL(site))
         } else if (!(c == " " || c == "\n" || c == "\t" || c == "\r")) {
             this.addSyntaxError(
                 site,
