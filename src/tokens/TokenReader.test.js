@@ -1,6 +1,8 @@
 import { strictEqual, throws } from "node:assert"
 import { describe, it } from "node:test"
 import { makeGroup } from "./GenericGroup.js"
+import { makeSource } from "./Source.js"
+import { makeTokenizer } from "./Tokenizer.js"
 import { anyWord, group, symbol, wildcard, word } from "./TokenMatcher.js"
 import { makeTokenReader } from "./TokenReader.js"
 import { makeWord } from "./Word.js"
@@ -170,5 +172,31 @@ describe(`TokenReader with tokens [con bool false]`, () => {
         r.end()
 
         strictEqual(r.isEof(), true)
+    })
+})
+
+describe("TokenReader.insertSemicolons", () => {
+    it("doesn't insert semicolons in example which already has semicolons", () => {
+        const src = `
+        a: Option[Int] = Option[Int]::Some{10};
+        b: Option[ByteArray] = Option[ByteArray]::Some{#};
+            
+        (a, b).switch{
+            (Some, _) => true,
+            (None, None) => false,
+            (_, Some) => false
+        }`
+
+        const tokens = makeTokenizer(makeSource(src), {
+            preserveNewlines: true
+        }).tokenize()
+
+        const r = makeTokenReader({ tokens })
+
+        const n = tokens.length
+
+        const r2 = r.insertSemicolons(["=", ":", ".", ";"])
+
+        strictEqual(r2.originalTokens.length, n)
     })
 })

@@ -485,7 +485,7 @@ class TokenReaderImpl {
 
         reader._i = reader.tokens.findIndex((t) => t == this.tokens[this._i])
 
-        if (reader._i) {
+        if (reader._i == -1) {
             throw new Error(
                 "unable to keep TokenReader position in insertSemicolons"
             )
