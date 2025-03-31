@@ -83,6 +83,7 @@ class TokenReaderImpl {
         this.originalTokens
         this._i = 0
         this._failedMatches = []
+        this._ignoreNewlines = ignoreNewlines
     }
 
     /**
