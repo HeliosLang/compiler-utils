@@ -1,6 +1,7 @@
 import { isUndefined } from "@helios-lang/type-utils"
 import { makeErrorCollector } from "../errors/index.js"
 import { isGroup, makeGroup } from "./GenericGroup.js"
+import { makeSymbolToken } from "./SymbolToken.js"
 import { makeTokenSite } from "./TokenSite.js"
 
 /**
@@ -409,6 +410,88 @@ class TokenReaderImpl {
 
     unreadToken() {
         this._i = Math.max(this._i - 1, 0)
+    }
+
+    /**
+     * Semicolons are inserted right before a newline token if the following conditions hold:
+     *   1. the first non-comment token before the NL token isn't a NL or a known multiline operator
+     *   2. the first non-comment/non-NL token after the NL token isn't a known multiline operator
+     *   3. the NL token isn't the first token in the reader
+     *   4. the NL token isn't the last token in the reader
+     * @param {string[]} multilineOperators
+     * @returns {TokenReader}
+     */
+    insertSemicolons(multilineOperators) {
+        const orig = this.originalTokens
+
+        /**
+         * @param {Token} t
+         * @returns {boolean}
+         */
+        const isMultilineOperator = (t) => {
+            if (t.kind == "symbol") {
+                return multilineOperators.includes(t.value)
+            } else {
+                return false
+            }
+        }
+
+        /**
+         * @type {Token[]}
+         */
+        const tokens = []
+
+        /**
+         * @type {undefined | Token}
+         */
+        let prev
+
+        const n = orig.length
+
+        for (let i = 0; i < n; i++) {
+            const t = orig[i]
+
+            // the NL isn't first nor last
+            if (t.kind == "newline" && i > 0 && i < n - 1) {
+                // the prev token isn't another NL, nor a known multiline operator
+                if (
+                    prev &&
+                    prev.kind != "newline" &&
+                    !isMultilineOperator(prev)
+                ) {
+                    const next = orig
+                        .slice(i + 1)
+                        .find((t) => t.kind != "comment" && t.kind != "newline")
+
+                    // the next token isn't a known multiline operator
+                    if (next && !isMultilineOperator(next)) {
+                        tokens.push(makeSymbolToken(";", t.site))
+                    }
+                }
+            }
+
+            tokens.push(t)
+
+            if (t.kind != "comment") {
+                prev = t
+            }
+        }
+
+        const reader = new TokenReaderImpl(
+            tokens,
+            this.errors,
+            this._ignoreNewlines
+        )
+
+        reader._i = reader.tokens.findIndex((t) => t == this.tokens[this._i])
+
+        if (reader._i) {
+            throw new Error(
+                "unable to keep TokenReader position in insertSemicolons"
+            )
+        }
+
+        return reader
     }
 
     /**
