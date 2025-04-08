@@ -418,7 +418,7 @@ class TokenReaderImpl {
      *   2. the first non-comment/non-NL token after the NL token isn't a known multiline operator
      *   3. the NL token isn't the first token in the reader
      *   4. the NL token isn't the last token in the reader
-     * @param {string[]} multilineOperators
+     * @param {string[]} multilineOperators - can be Symbol or Keyword
      * @returns {TokenReader}
      */
     insertSemicolons(multilineOperators) {
@@ -429,7 +429,7 @@ class TokenReaderImpl {
          * @returns {boolean}
          */
         const isMultilineOperator = (t) => {
-            if (t.kind == "symbol") {
+            if (t.kind == "symbol" || t.kind == "word") {
                 return multilineOperators.includes(t.value)
             } else {
                 return false
@@ -451,9 +451,9 @@ class TokenReaderImpl {
         for (let i = 0; i < n; i++) {
             const t = orig[i]
 
-            // the NL isn't first nor last
+            // the NL isn't the first token nor the last token
             if (t.kind == "newline" && i > 0 && i < n - 1) {
-                // the prev token isn't another NL, nor a known multiline operator
+                // the previous token isn't another NL, nor a known multiline operator
                 if (
                     prev &&
                     prev.kind != "newline" &&

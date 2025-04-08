@@ -249,4 +249,41 @@ describe("TokenReader.insertSemicolons", () => {
 
         strictEqual(r2.originalTokens.length, n + 1)
     })
+
+    it("doesn't insert semicolon after before else keyword", () => {
+        const src = `if() {
+        } // THING
+        else {}`
+
+        const tokens = makeTokenizer(makeSource(src), {
+            preserveComments: true,
+            preserveNewlines: true
+        }).tokenize()
+
+        const r = makeTokenReader({ tokens })
+
+        const n = tokens.length
+
+        const r2 = r.insertSemicolons(["else"])
+
+        strictEqual(r2.originalTokens.length, n)
+    })
+
+    it("doesn't insert semicolon after != operator", () => {
+        const src = `thing.longAttributeName.someMethodName() != 
+        otherThing.longAttributeName.someMethodName()`
+
+        const tokens = makeTokenizer(makeSource(src), {
+            preserveComments: true,
+            preserveNewlines: true
+        }).tokenize()
+
+        const r = makeTokenReader({ tokens })
+
+        const n = tokens.length
+
+        const r2 = r.insertSemicolons(["!="])
+
+        strictEqual(r2.originalTokens.length, n)
+    })
 })
