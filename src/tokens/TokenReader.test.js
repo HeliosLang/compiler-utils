@@ -286,4 +286,19 @@ describe("TokenReader.insertSemicolons", () => {
 
         strictEqual(r2.originalTokens.length, n)
     })
+
+    it("doesn't fail for empty source", () => {
+        const tokens = makeTokenizer(makeSource(""), {
+            preserveComments: true,
+            preserveNewlines: true
+        }).tokenize()
+
+        const r = makeTokenReader({ tokens })
+
+        const n = tokens.length
+
+        const r2 = r.insertSemicolons([])
+
+        strictEqual(r2.originalTokens.length, n)
+    })
 })
