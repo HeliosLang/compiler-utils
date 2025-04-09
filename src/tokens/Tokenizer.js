@@ -971,9 +971,11 @@ class TokenizerImpl {
             separators,
             site: groupSite
         })
+
         if (group.error) {
             this.addSyntaxError(group.site, group.error)
         }
+
         return group
     }
 

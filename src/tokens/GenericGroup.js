@@ -67,20 +67,43 @@ class GenericGroupImpl {
     site
 
     /**
-     * @readonly
+     * @readwrite
      * @type {string | undefined}
      */
     error
 
     /**
+     * To ensure the final fields of the group contains some non-whitespace/non-comment tokens:
+     *   - if there is only 1 field, and that field only contains whitespace and comments -> the result is 0 fields
+     *   - if there are 2 or more fields, and any of those fields only contains whitespace of comments -> error, but continue by removing those fields
      * @param {GroupKind} kind - "(", "[" or "{"
      * @param {F[]} fields
      * @param {SymbolToken[]} separators - useful for more accurate errors
      * @param {Site} site - end site must be supplied
      */
     constructor(kind, fields, separators, site) {
-        const expectCount = Math.max(fields.length - 1, 0)
         this.error = undefined
+
+        const expectCount = Math.max(fields.length - 1, 0)
+
+        if (fields.length == 1) {
+            if (isEmptyField(fields[0])) {
+                fields = []
+            }
+        } else if (fields.length >= 2) {
+            fields = fields.filter((f, i) => {
+                if (isEmptyField(f)) {
+                    if (!this.error) {
+                        this.error = `group field ${i + 1} is empty`
+                    }
+
+                    return false
+                } else {
+                    return true
+                }
+            })
+        }
+
         if (separators.length > expectCount) {
             const separatorType = separators[0].value
             this.error = `'${kind}' group: excess '${separatorType}' - expected ${expectCount}, got ${separators.length}`
@@ -238,4 +261,23 @@ export function getOtherGroupSymbol(t) {
     } else {
         throw new Error("not a group symbol")
     }
+}
+
+/**
+ * @template {Token[] | TokenReader} [F=Token[]]
+ * @param {F} f
+ * @returns {boolean}
+ */
+function isEmptyField(f) {
+    if (Array.isArray(f)) {
+        if (f.every((t) => t.kind == "newline" || t.kind == "comment")) {
+            return true
+        }
+    } else if (
+        f.tokens.every((t) => t.kind == "newline" || t.kind == "comment")
+    ) {
+        return true
+    }
+
+    return false
 }

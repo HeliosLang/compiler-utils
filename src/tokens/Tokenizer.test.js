@@ -68,4 +68,27 @@ describe("Tokenizer", () => {
             tokenizer.errors.throw()
         }, /unmatched/)
     })
+
+    it("tokenizes '{\n/*comment*/\n}}' as group with 0 fields", () => {
+        const src = `{
+            // comment
+        }`
+
+        const tokenizer = makeTokenizer(makeSource(src), {
+            preserveComments: true,
+            preserveNewlines: true
+        })
+
+        const ts = tokenizer.tokenize()
+
+        strictEqual(ts.length, 1)
+
+        const t = ts[0]
+
+        if (t.kind != "{") {
+            throw new Error("expected group")
+        }
+
+        strictEqual(t.fields.length, 0)
+    })
 })
