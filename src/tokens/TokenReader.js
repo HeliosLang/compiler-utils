@@ -59,10 +59,9 @@ class TokenReaderImpl {
     _ignoreNewlines
 
     /**
-     * @private
      * @type {number}
      */
-    _i
+    pos
 
     /**
      * @private
@@ -82,7 +81,7 @@ class TokenReaderImpl {
             : tokens
         this.errors = errors
         this.originalTokens
-        this._i = 0
+        this.pos = 0
         this._failedMatches = []
         this._ignoreNewlines = ignoreNewlines
     }
@@ -92,7 +91,7 @@ class TokenReaderImpl {
      * @type {Token[]}
      */
     get rest() {
-        return this.tokens.slice(this._i)
+        return this.tokens.slice(this.pos)
     }
 
     /**
@@ -102,7 +101,7 @@ class TokenReaderImpl {
      */
     assert(...matchers) {
         matchers.forEach((m, j) => {
-            const i = this._i + j
+            const i = this.pos + j
 
             if (i == this.tokens.length) {
                 let lastSite = this.tokens[this.tokens.length - 1].site
@@ -126,17 +125,17 @@ class TokenReaderImpl {
             }
         })
 
-        this._i = this._i + matchers.length
+        this.pos = this.pos + matchers.length
 
         return this
     }
 
     end() {
-        if (this._i < this.tokens.length) {
+        if (this.pos < this.tokens.length) {
             // TODO: should we merge the contexts of all the remaining tokens
-            this.errors.syntax(this.tokens[this._i].site, "unexpected tokens")
+            this.errors.syntax(this.tokens[this.pos].site, "unexpected tokens")
 
-            this._i = this.tokens.length
+            this.pos = this.tokens.length
         }
     }
 
@@ -148,7 +147,7 @@ class TokenReaderImpl {
      * @returns {[TokenReader, ...MapMatchersToTokens<Matchers>] | undefined}
      */
     findNext(...matchers) {
-        const i0 = this._i
+        const i0 = this.pos
 
         const res = /** @type {any} */ (this.findNextInternal(...matchers))
 
@@ -188,7 +187,7 @@ class TokenReaderImpl {
     findNextInternal(...matchers) {
         const n = matchers.length
 
-        const i0 = this._i
+        const i0 = this.pos
         for (let i = i0; i < this.tokens.length; i++) {
             if (this.tokens.length - i >= n) {
                 const res = matchers.every((m, j) =>
@@ -202,7 +201,7 @@ class TokenReaderImpl {
                             .map((t) => (isGroup(t) ? this.augmentGroup(t) : t))
                     )
 
-                    this._i = i + n
+                    this.pos = i + n
                     this._failedMatches = []
 
                     return /** @type {any} */ ([
@@ -228,7 +227,7 @@ class TokenReaderImpl {
      * @returns {[TokenReader, ...MapMatchersToTokens<Matchers>] | undefined}
      */
     findLast(...matchers) {
-        const i0 = this._i
+        const i0 = this.pos
 
         const res = /** @type {any} */ (this.findLastInternal(...matchers))
 
@@ -268,7 +267,7 @@ class TokenReaderImpl {
     findLastInternal(...matchers) {
         const n = matchers.length
 
-        const i0 = this._i
+        const i0 = this.pos
         for (let i = this.tokens.length - 1; i >= i0; i--) {
             if (this.tokens.length - i >= n) {
                 const res = matchers.every((m, j) =>
@@ -282,7 +281,7 @@ class TokenReaderImpl {
                             .map((t) => (isGroup(t) ? this.augmentGroup(t) : t))
                     )
 
-                    this._i = i + n
+                    this.pos = i + n
                     this._failedMatches = []
 
                     return /** @type {any} */ ([
@@ -316,7 +315,7 @@ class TokenReaderImpl {
         if ((m = this.findNextInternal(...matchers))) {
             let [reader] = m
 
-            this._i -= n
+            this.pos -= n
 
             return reader
         } else {
@@ -326,8 +325,8 @@ class TokenReaderImpl {
                 this._ignoreNewlines
             )
 
-            reader._i = this._i
-            this._i = this.tokens.length
+            reader.pos = this.pos
+            this.pos = this.tokens.length
 
             return reader
         }
@@ -337,7 +336,7 @@ class TokenReaderImpl {
      * @returns {boolean}
      */
     isEof() {
-        return this._i >= this.tokens.length
+        return this.pos >= this.tokens.length
     }
 
     /**
@@ -348,19 +347,19 @@ class TokenReaderImpl {
     matches(...matchers) {
         const n = matchers.length
 
-        if (this.tokens.length - this._i >= n) {
+        if (this.tokens.length - this.pos >= n) {
             const res = matchers.every((m, j) =>
-                m.matches(this.tokens[this._i + j])
+                m.matches(this.tokens[this.pos + j])
             )
 
             if (res) {
                 const matched = /** @type {any} */ (
                     this.tokens
-                        .slice(this._i, this._i + n)
+                        .slice(this.pos, this.pos + n)
                         .map((t) => (isGroup(t) ? this.augmentGroup(t) : t))
                 )
                 this._failedMatches = []
-                this._i += n
+                this.pos += n
 
                 if (matched.length == 1) {
                     return matched[0]
@@ -383,7 +382,7 @@ class TokenReaderImpl {
 
         if (n > 0) {
             if (throwFail) {
-                const i = Math.min(this._i, this.tokens.length - 1)
+                const i = Math.min(this.pos, this.tokens.length - 1)
                 if (typeof throwFail == "string") {
                     this.errors.syntax(this.tokens[i].site, throwFail)
                 } else {
@@ -395,7 +394,7 @@ class TokenReaderImpl {
                     this.errors.syntax(
                         this.tokens[i].site,
                         `expected '${this._failedMatches.map((fm, i) => fm.map((f) => f.toString()).join(" ") + (i < n - 2 ? ", " : i < n - 1 ? " or " : "")).join("")}', got '${this.tokens
-                            .slice(this._i, longest)
+                            .slice(this.pos, longest)
                             .map((t) => t.toString())
                             .join(" ")}'`
                     )
@@ -409,7 +408,7 @@ class TokenReaderImpl {
     }
 
     unreadToken() {
-        this._i = Math.max(this._i - 1, 0)
+        this.pos = Math.max(this.pos - 1, 0)
     }
 
     /**
@@ -484,11 +483,11 @@ class TokenReaderImpl {
         )
 
         if (reader.tokens.length > 0) {
-            reader._i = reader.tokens.findIndex(
-                (t) => t == this.tokens[this._i]
+            reader.pos = reader.tokens.findIndex(
+                (t) => t == this.tokens[this.pos]
             )
 
-            if (reader._i == -1) {
+            if (reader.pos == -1) {
                 throw new Error(
                     "TokenReader.insertSemicolons(): unable to keep TokenReader position"
                 )

@@ -301,4 +301,19 @@ describe("TokenReader.insertSemicolons", () => {
 
         strictEqual(r2.originalTokens.length, n)
     })
+
+    it("doesn't fail for single line already ending with semicolon", () => {
+        const tokens = makeTokenizer(makeSource("0;"), {
+            preserveComments: true,
+            preserveNewlines: true
+        }).tokenize()
+
+        const r = makeTokenReader({ tokens })
+
+        const n = tokens.length
+
+        const r2 = r.insertSemicolons([";"])
+
+        strictEqual(r2.originalTokens.length, n)
+    })
 })

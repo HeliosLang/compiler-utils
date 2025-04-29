@@ -121,8 +121,16 @@ export {
  */
 
 /**
- * Source is used by textual-Uplc, IR and Helios
+ *
  * @typedef {object} Source
+ * `Source` wraps a string so that it can be passed by reference.
+ *
+ * `Source` can also be given additional context information, which is useful during debugging.
+ *
+ * `Source` is used by textual-Uplc, IR and Helios.
+ *
+ * Instantiate a `Source` instance with {@link makeSource}.
+ *
  * @prop {string} content
  * @prop {string} name provided filename (or script name parsed from script header)
  * @prop {string} [moduleName] optional helios-specific script/module name, parsed from the script header
@@ -139,6 +147,10 @@ export {
 
 /**
  * @typedef {object} BoolLiteral
+ * `BoolLiteral` is a {@link Token} variant that represents the keywords `true` or `false`.
+ *
+ * Instantiate a `BoolLiteral` token with {@link makeBoolLiteral}.
+ *
  * @prop {Site} site
  * @prop {"bool"} kind
  * @prop {boolean} value
@@ -148,7 +160,7 @@ export {
 
 /**
  * @typedef {object} ByteArrayLiteral
- * Use {@link makeByteArrayLiteral} to create a `ByteArrayLiteral`
+ * Instantiate a `ByteArrayLiteral` token with {@link makeByteArrayLiteral}.
  *
  * @prop {Site} site
  * @prop {"bytes"} kind
@@ -159,6 +171,8 @@ export {
 
 /**
  * @typedef {object} Comment
+ * Instantiate a `Comment` token with {@link makeComment}.
+ *
  * @prop {Site} site
  * @prop {"comment"} kind
  * @prop {string} value
@@ -202,6 +216,8 @@ export {
 /**
  *
  * @typedef {object} IntLiteral
+ * Instantiate a `IntLiteral` token with {@link makeIntLiteral}.
+ *
  * @prop {Site} site
  * @prop {"int"} kind
  * @prop {bigint} value
@@ -211,6 +227,12 @@ export {
 
 /**
  * @typedef {object} NL
+ * `NL` is a {@link Token} variant that represents a newline character.
+ *
+ * Newline characters are used for Automatic Semicolon Insertion.
+ *
+ * Instaniate a `NL` token with {@link makeNL}.
+ *
  * @prop {Site} site
  * @prop {"newline"} kind
  * @prop {(other: Token) => boolean} isEqual
@@ -219,6 +241,8 @@ export {
 
 /**
  * @typedef {object} RealLiteral
+ * Instantiate a `RealLiteral` token with {@link makeRealLiteral}.
+ *
  * @prop {Site} site
  * @prop {"real"} kind
  * @prop {bigint} value
@@ -228,6 +252,8 @@ export {
 
 /**
  * @typedef {object} StringLiteral
+ * Instantiate a `StringLiteral` with {@link makeStringLiteral}.
+ *
  * @prop {Site} site
  * @prop {"string"} kind
  * @prop {string} value
@@ -238,6 +264,10 @@ export {
 /**
  * @template {string} [T=string]
  * @typedef {object} SymbolToken
+ * `SymbolToken` is a {@link Token} variant that represent a non-alphanumeric/non-whitespace sequence of characters.
+ *
+ * Instantiate a `SymbolToken` with {@link makeSymbolToken}.
+ *
  * @prop {Site} site
  * @prop {"symbol"} kind
  * @prop {T} value
@@ -248,6 +278,8 @@ export {
 
 /**
  * @typedef {object} Word
+ * Instantiate a `Word` token with {@link makeWord}.
+ *
  * @prop {Site} site
  * @prop {"word"} kind
  * @prop {string} value
@@ -275,6 +307,8 @@ export {
 
 /**
  * @typedef {object} Tokenizer
+ * Instantiate a `Tokenizer` with {@link makeTokenizer}.
+ *
  * @prop {ErrorCollector} errors
  * @prop {(nestGroups?: boolean) => Token[]} tokenize
  * @prop {() => Generator<Token>} stream
@@ -320,6 +354,11 @@ export {
 
 /**
  * @typedef {object} TokenReader
+ * Instantiate a `TokenReader` with {@link makeTokenReader}.
+ *
+ * @prop {number} pos
+ * Current position of `TokenReader` in `tokens`.
+ *
  * @prop {Token[]} tokens
  * Tokens optionally excluding newlines
  *
