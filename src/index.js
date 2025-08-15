@@ -20,6 +20,7 @@ export {
     makeComment,
     makeDummySite,
     makeGroup,
+    makeHeliosSource,
     makeIntLiteral,
     makeNL,
     makeRealLiteral,

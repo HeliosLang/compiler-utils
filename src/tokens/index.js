@@ -9,7 +9,7 @@ export {
 export { makeIntLiteral } from "./IntLiteral.js"
 export { makeNL } from "./NL.js"
 export { REAL_PRECISION, makeRealLiteral } from "./RealLiteral.js"
-export { makeSource } from "./Source.js"
+export { makeHeliosSource, makeSource } from "./Source.js"
 export { makeStringLiteral } from "./StringLiteral.js"
 export { makeSymbolToken } from "./SymbolToken.js"
 export { makeTokenizer } from "./Tokenizer.js"
