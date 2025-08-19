@@ -1,4 +1,8 @@
-import { makeSyntaxError } from "./CompilerError.js"
+import {
+    makeReferenceError,
+    makeSyntaxError,
+    makeTypeError
+} from "./CompilerError.js"
 
 /**
  * @import { CompilerError, ErrorCollector, Site } from "../index.js"
@@ -31,6 +35,22 @@ class ErrorCollectorImpl {
      */
     syntax(site, msg) {
         this.errors.push(makeSyntaxError(site, msg))
+    }
+
+    /**
+     * @param {Site} site
+     * @param {string} msg
+     */
+    type(site, msg) {
+        this.errors.push(makeTypeError(site, msg))
+    }
+
+    /**
+     * @param {Site} site
+     * @param {string} msg
+     */
+    reference(site, msg) {
+        this.errors.push(makeReferenceError(site, msg))
     }
 
     /**

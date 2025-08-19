@@ -112,6 +112,12 @@ export {
  * @prop {(site: Site, msg: string) => void} syntax
  * Adds a syntax error
  *
+ * @prop {(site: Site, msg: string) => void} type
+ * Adds a type error
+ *
+ * @prop {(site: Site, msg: string) => void} reference
+ * Adds a reference error
+ *
  * @prop {() => void} throw
  * Throws an error if it contains some errors
  */
